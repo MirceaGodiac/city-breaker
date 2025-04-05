@@ -13,10 +13,11 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from "firebase/auth";
+import { createUserProfile } from "../firebase_files/create_user";
 
 function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("raresb.cazan@gmail.com");
+  const [password, setPassword] = useState("1976@Mami");
   const [loading, setIsLoading] = useState(false);
   const local_auth = auth; // Assuming you have a custom hook for authentication
 
@@ -45,6 +46,7 @@ function Login() {
         email,
         password
       );
+      await createUserProfile();
       console.log(response);
     } catch (error) {
       console.error("Error signing up with email and password", error);
@@ -84,7 +86,7 @@ function Login() {
             await handleLogin();
           }}
         >
-          <Text style={styles.buttonText}>Sign In</Text>
+          <Text style={styles.buttonText}>Log In</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

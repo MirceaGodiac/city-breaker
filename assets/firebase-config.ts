@@ -1,6 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { FirebaseApp, initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import {getDatabase} from "firebase/database"
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -9,6 +10,7 @@ import { getAuth } from "firebase/auth";
 const firebaseConfig = {
   apiKey: "AIzaSyB2npifTsS7yEihYkpcThHg6Il0wq393lg",
   authDomain: "city-breaker.firebaseapp.com",
+  databaseURL: "https://city-breaker-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "city-breaker",
   storageBucket: "city-breaker.firebasestorage.app",
   messagingSenderId: "181212596638",
@@ -17,6 +19,7 @@ const firebaseConfig = {
 };
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
+export const db = getDatabase(app);
 export const auth = getAuth(app);
 
 
