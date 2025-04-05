@@ -24,7 +24,6 @@ import * as FileSystem from "expo-file-system";
 import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
 import { analyzeLandmarkImage } from "../claude";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 const VISION_API_KEY = "AIzaSyAnHyrHJLYMvcRD38LwYsHCIc9WqWS34vg";
 const CLAUDE_API_KEY =
