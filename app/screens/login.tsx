@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
   StatusBar,
+  Alert,
 } from "react-native";
 import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
@@ -24,8 +25,12 @@ function Login() {
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
       console.log(response);
-    } catch (error) {
-      console.error("Error signing in", error);
+    } catch (error: any) {
+      if (error.code === "auth/wrong-password") {
+        Alert.alert("Login Error", "The password you entered is incorrect.");
+      } else {
+        Alert.alert("Login Error", error.message);
+      }
     } finally {
       setIsLoading(false);
     }
