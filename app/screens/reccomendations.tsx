@@ -8,22 +8,24 @@ import {
   TextInput,
   TouchableOpacity,
   StatusBar,
+  Platform,
 } from "react-native";
-import { Platform } from "react-native";
 import { findNearbyPlaces } from "../firebase_files/find-nearby-places";
+import { findNearbyExperiences } from "../firebase_files/find-nearby-experiences";
 import { Ionicons } from "@expo/vector-icons";
 
 interface NearbyPlacesScreenProps {
   navigation: any;
 }
 
-const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
-  navigation,
-}) => {
+type SearchTab = "Restaurants" | "Experiences";
+
+const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({ navigation }) => {
   const [location, setLocation] = useState("");
   const [places, setPlaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTab, setSelectedTab] = useState<SearchTab>("Restaurants");
 
   const searchPlaces = async () => {
     if (!location.trim()) return;
@@ -32,8 +34,13 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
     setError(null);
 
     try {
-      const nearbyPlaces = await findNearbyPlaces(location);
-      setPlaces(nearbyPlaces);
+      let results;
+      if (selectedTab === "Restaurants") {
+        results = await findNearbyPlaces(location);
+      } else {
+        results = await findNearbyExperiences(location);
+      }
+      setPlaces(results);
     } catch (err) {
       setError("Failed to find nearby places. Please try again.");
       console.error(err);
@@ -41,6 +48,13 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
       setLoading(false);
     }
   };
+
+  // Refresh the search when the selectedTab changes
+  useEffect(() => {
+    if (location.trim()) {
+      searchPlaces();
+    }
+  }, [selectedTab]);
 
   const renderPlaceItem = ({ item }: { item: any }) => (
     <TouchableOpacity
@@ -101,6 +115,42 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
         </TouchableOpacity>
       </View>
 
+      {/* New Tabs below search bar */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            selectedTab === "Restaurants" && styles.tabActive,
+          ]}
+          onPress={() => setSelectedTab("Restaurants")}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              selectedTab === "Restaurants" && styles.tabTextActive,
+            ]}
+          >
+            Restaurants
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            selectedTab === "Experiences" && styles.tabActive,
+          ]}
+          onPress={() => setSelectedTab("Experiences")}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              selectedTab === "Experiences" && styles.tabTextActive,
+            ]}
+          >
+            Experiences
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       {error && <Text style={styles.errorText}>{error}</Text>}
 
       {loading ? (
@@ -156,6 +206,29 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
+  },
+  tabContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    backgroundColor: "white",
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderBottomWidth: 2,
+    borderBottomColor: "transparent",
+  },
+  tabActive: {
+    borderBottomColor: "#007AFF",
+  },
+  tabText: {
+    fontSize: 16,
+    color: "#666",
+  },
+  tabTextActive: {
+    color: "#007AFF",
+    fontWeight: "bold",
   },
   listContainer: {
     padding: 16,

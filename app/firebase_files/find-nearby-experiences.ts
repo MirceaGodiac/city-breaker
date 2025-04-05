@@ -18,7 +18,7 @@ interface NearbyPlace {
   openNow?: boolean;
 }
 
-export async function findNearbyPlaces(locationName: string): Promise<NearbyPlace[]> {
+export async function findNearbyExperiences(locationName: string): Promise<NearbyPlace[]> {
   try {
     // First, geocode the location name to get coordinates
     const geocodeResponse = await client.geocode({
