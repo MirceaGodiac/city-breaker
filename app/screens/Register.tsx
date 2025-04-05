@@ -14,6 +14,8 @@ import { useNavigation } from "@react-navigation/native";
 import { auth } from "../../assets/firebase-config";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { createUserProfile } from "../firebase_files/create_user";
+import { db } from "../../assets/firebase-config";
+import { ref, set } from "@firebase/database";
 
 function Register() {
   const [email, setEmail] = useState("");

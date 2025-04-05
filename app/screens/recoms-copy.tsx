@@ -10,7 +10,7 @@ import {
   StatusBar,
 } from "react-native";
 import { Platform } from "react-native";
-import { findNearbyPlaces } from "../firebase_files/find-nearby-places";
+import { findNearbyPlaces } from "../firebase_files/find-nearby-restaurants";
 import { Ionicons } from "@expo/vector-icons";
 
 interface NearbyPlacesScreenProps {
