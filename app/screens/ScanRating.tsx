@@ -39,7 +39,7 @@ export default function ScanRating() {
         time: scanData.timestamp,
         description: desc,
         rating: rating,
-        tags: scanData.tags, // new: include tags from scanData
+        tags: scanData.tags, // include tags from scanData
       };
       await set(ref(db, "SCANS/" + scanID), scanRecord);
       if (isPublic) {
@@ -95,7 +95,13 @@ export default function ScanRating() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "white" },
+  container: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center",
+    padding: 20, 
+    backgroundColor: "white" 
+  },
   title: {
     fontSize: 24,
     fontWeight: "bold",
@@ -107,7 +113,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginVertical: 20,
   },
-  star: { marginHorizontal: 5 },
-  label: { fontSize: 16, marginVertical: 10 },
-  input: { borderWidth: 1, borderColor: "#ccc", padding: 10, marginBottom: 20 },
+  star: { 
+    marginHorizontal: 5 
+  },
+  label: { 
+    fontSize: 16, 
+    marginVertical: 10 
+  },
+  input: { 
+    borderWidth: 1, 
+    borderColor: "#ccc", 
+    padding: 10, 
+    marginBottom: 20,
+    width: "80%" 
+  },
 });
