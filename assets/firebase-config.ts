@@ -10,6 +10,7 @@ import {getDatabase} from "firebase/database"
 const firebaseConfig = {
   apiKey: "AIzaSyB2npifTsS7yEihYkpcThHg6Il0wq393lg",
   authDomain: "city-breaker.firebaseapp.com",
+  databaseURL: "https://city-breaker-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "city-breaker",
   storageBucket: "city-breaker.firebasestorage.app",
   messagingSenderId: "181212596638",

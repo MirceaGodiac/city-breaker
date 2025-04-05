@@ -13,6 +13,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from "firebase/auth";
+import { createUserProfile } from "../firebase_files/create_user";
 
 function Login() {
   const [email, setEmail] = useState("raresb.cazan@gmail.com");
@@ -45,6 +46,7 @@ function Login() {
         email,
         password
       );
+      await createUserProfile(response.user.uid, response.user.email || '');
       console.log(response);
     } catch (error) {
       console.error("Error signing up with email and password", error);
@@ -52,6 +54,7 @@ function Login() {
       setIsLoading(false);
     }
   }
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -84,7 +87,7 @@ function Login() {
             await handleLogin();
           }}
         >
-          <Text style={styles.buttonText}>Sign In</Text>
+          <Text style={styles.buttonText}>Log In</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
