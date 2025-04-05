@@ -8,92 +8,30 @@ import {
   TextInput,
   TouchableOpacity,
   StatusBar,
+  Platform,
 } from "react-native";
-import { Platform } from "react-native";
 import { findNearbyPlaces } from "../firebase_files/find-nearby-places";
+import { findNearbyExperiences } from "../firebase_files/find-nearby-experiences";
 import { Ionicons } from "@expo/vector-icons";
-import axios from "axios"; // added import
-
-const OPENAI_API_KEY =
-  "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"; // Replace with your API key
-
-// Add your Google API key
-const GOOGLE_MAPS_API_KEY = "AIzaSyA9p8_jce6LBPwXB_BoHOMosBaLo85yeF8"; // Replace with your key
-
-// New helper to get embedding from OpenAI
-const getEmbedding = async (text: string): Promise<number[]> => {
-  // Call OpenAI’s embedding API using the text-embedding-ada-002 model
-  const response = await axios.post(
-    "https://api.openai.com/v1/embeddings",
-    {
-      input: text,
-      model: "text-embedding-ada-002",
-    },
-    {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-    }
-  );
-  return response.data.data[0].embedding;
-};
-
-// Helper to compute cosine similarity between two vectors
-const cosineSimilarity = (a: number[], b: number[]) => {
-  let dot = 0,
-    magA = 0,
-    magB = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    magA += a[i] ** 2;
-    magB += b[i] ** 2;
-  }
-  return dot / (Math.sqrt(magA) * Math.sqrt(magB));
-};
-
-// Replace dummy function with a real fetch for reviews
-const fetchTopReviews = async (place: any): Promise<string> => {
-  // Fetch the top 5 reviews for a place using its placeId
-  try {
-    const response = await axios.get(
-      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.placeId}&fields=reviews&key=${GOOGLE_MAPS_API_KEY}`
-    );
-    if (response.data.result && response.data.result.reviews) {
-      // Log the fetched reviews for verification
-      console.log(
-        "Fetched reviews for place",
-        place.placeId,
-        response.data.result.reviews
-      );
-      const reviews = response.data.result.reviews.slice(0, 10); // Get top 10 reviews
-      // Aggregate reviews text
-      return reviews.map((r: any) => r.text).join(" ");
-    }
-    return "";
-  } catch (err) {
-    console.error("Failed to fetch reviews", err);
-    return "";
-  }
-};
 
 interface NearbyPlacesScreenProps {
   navigation: any;
 }
 
+type SearchTab = "Restaurants" | "Experiences";
+
 const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
   navigation,
 }) => {
   const [location, setLocation] = useState("");
-  const [reviewQuery, setReviewQuery] = useState(""); // new state for review criteria
   const [places, setPlaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // New function to handle category selection
-  const handleCategorySelect = (category: string) => {
-    setReviewQuery(category);
-  };
+  const [selectedTab, setSelectedTab] = useState<SearchTab>("Restaurants");
+  // Cache results per tab; key are the tab names.
+  const [cachedResults, setCachedResults] = useState<{
+    [key in SearchTab]?: any[];
+  }>({});
 
   const searchPlaces = async () => {
     if (!location.trim()) return;
@@ -102,24 +40,15 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
     setError(null);
 
     try {
-      const nearbyPlaces = await findNearbyPlaces(location);
-      let scoredPlaces = nearbyPlaces;
-      if (reviewQuery.trim()) {
-        const queryEmbedding = await getEmbedding(reviewQuery);
-        scoredPlaces = await Promise.all(
-          nearbyPlaces.map(async (place: any) => {
-            const reviewText = await fetchTopReviews(place);
-            const reviewEmbedding = await getEmbedding(reviewText);
-            const similarity = cosineSimilarity(
-              queryEmbedding,
-              reviewEmbedding
-            );
-            return { ...place, score: similarity };
-          })
-        );
-        scoredPlaces.sort((a: any, b: any) => b.score - a.score);
+      let results;
+      if (selectedTab === "Restaurants") {
+        results = await findNearbyPlaces(location);
+      } else {
+        results = await findNearbyExperiences(location);
       }
-      setPlaces(scoredPlaces);
+      // Cache the results for the current tab
+      setCachedResults((prev) => ({ ...prev, [selectedTab]: results }));
+      setPlaces(results);
     } catch (err) {
       setError("Failed to find nearby places. Please try again.");
       console.error(err);
@@ -127,6 +56,25 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
       setLoading(false);
     }
   };
+
+  // When the selectedTab changes, check if results exist in cache.
+  useEffect(() => {
+    if (location.trim()) {
+      if (cachedResults[selectedTab]) {
+        setPlaces(cachedResults[selectedTab]!);
+      } else {
+        searchPlaces();
+      }
+    }
+  }, [selectedTab]);
+
+  // Optional: When location changes, clear the cache (assuming a new search)
+  useEffect(() => {
+    if (!location.trim()) {
+      setCachedResults({});
+      setPlaces([]);
+    }
+  }, [location]);
 
   const renderPlaceItem = ({ item }: { item: any }) => (
     <TouchableOpacity
@@ -144,9 +92,7 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
           )}
         </View>
       </View>
-
       <Text style={styles.address}>{item.address}</Text>
-
       <View style={styles.detailsContainer}>
         {item.openNow !== undefined && (
           <Text
@@ -158,7 +104,6 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
             {item.openNow ? "Open Now" : "Closed"}
           </Text>
         )}
-
         <View style={styles.typeContainer}>
           {item.types.slice(0, 2).map((type: string, index: number) => (
             <Text key={index} style={styles.type}>
@@ -173,31 +118,7 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-
-      {/* New culinary categories circles */}
-      <View style={styles.circleContainer}>
-        <TouchableOpacity
-          style={styles.circleItem}
-          onPress={() => handleCategorySelect("Fine Dining")}
-        >
-          <Text style={styles.circleText}>Culinary</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.circleItem}
-          onPress={() => handleCategorySelect("Cafes")}
-        >
-          <Text style={styles.circleText}>Activities</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.circleItem}
-          onPress={() => handleCategorySelect("Street Food")}
-        >
-          <Text style={styles.circleText}>Landmarks</Text>
-        </TouchableOpacity>
-      </View>
-
       <View style={styles.searchContainer}>
-        {/* location input */}
         <TextInput
           style={styles.searchInput}
           placeholder="Enter location..."
@@ -205,21 +126,48 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
           onChangeText={setLocation}
           onSubmitEditing={searchPlaces}
         />
-        {/* new natural language review query input */}
-        <TextInput
-          style={styles.reviewQueryInput}
-          placeholder="What are you in the mood for?"
-          value={reviewQuery}
-          onChangeText={setReviewQuery}
-          onSubmitEditing={searchPlaces}
-        />
         <TouchableOpacity style={styles.searchButton} onPress={searchPlaces}>
           <Ionicons name="search" size={24} color="white" />
         </TouchableOpacity>
       </View>
 
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {/* New Tabs below search bar */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            selectedTab === "Restaurants" && styles.tabActive,
+          ]}
+          onPress={() => setSelectedTab("Restaurants")}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              selectedTab === "Restaurants" && styles.tabTextActive,
+            ]}
+          >
+            Restaurants
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            selectedTab === "Experiences" && styles.tabActive,
+          ]}
+          onPress={() => setSelectedTab("Experiences")}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              selectedTab === "Experiences" && styles.tabTextActive,
+            ]}
+          >
+            Experiences
+          </Text>
+        </TouchableOpacity>
+      </View>
 
+      {error && <Text style={styles.errorText}>{error}</Text>}
       {loading ? (
         <ActivityIndicator style={styles.loader} size="large" color="#0066cc" />
       ) : (
@@ -246,30 +194,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
-  circleContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-  },
-  circleItem: {
-    flex: 1,
-    height: 50,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: "#4A90E2",
-    justifyContent: "center",
-    alignItems: "center",
-    marginHorizontal: 4,
-  },
-  circleText: {
-    color: "#4A90E2",
-    fontSize: 12,
-    textAlign: "center",
-  },
   searchContainer: {
-    height: 150,
-    flexDirection: "column",
+    flexDirection: "row",
     padding: 16,
     backgroundColor: "white",
     shadowColor: "#000",
@@ -287,20 +213,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginRight: 8,
     fontSize: 16,
-    paddingVertical: 8, // added vertical padding
-    textAlignVertical: "center", // ensures text is centered vertically
-  },
-  reviewQueryInput: {
-    flex: 1,
-    height: 44,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    marginRight: 8,
-    fontSize: 16,
-    marginTop: 8,
-    paddingVertical: 8, // added vertical padding
-    textAlignVertical: "center", // ensures text is centered vertically
   },
   searchButton: {
     width: 44,
@@ -309,6 +221,29 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
+  },
+  tabContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    backgroundColor: "white",
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderBottomWidth: 2,
+    borderBottomColor: "transparent",
+  },
+  tabActive: {
+    borderBottomColor: "#007AFF",
+  },
+  tabText: {
+    fontSize: 16,
+    color: "#666",
+  },
+  tabTextActive: {
+    color: "#007AFF",
+    fontWeight: "bold",
   },
   listContainer: {
     padding: 16,

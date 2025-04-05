@@ -150,7 +150,7 @@ export default function LandmarkDetails({ route }: Props) {
           }}
         >
           <FontAwesome name="thumbs-down" size={24} color="#ff5252" />
-          <Text style={styles.feedbackText}>not my thing</Text>
+          <Text style={styles.feedbackText}>Not my thing</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[
@@ -162,7 +162,7 @@ export default function LandmarkDetails({ route }: Props) {
           }}
         >
           <FontAwesome name="thumbs-up" size={24} color="#4caf50" />
-          <Text style={styles.feedbackText}>i like this!</Text>
+          <Text style={styles.feedbackText}>I like this!</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[
@@ -174,7 +174,7 @@ export default function LandmarkDetails({ route }: Props) {
           }}
         >
           <FontAwesome name="heart" size={24} color="#e91e63" />
-          <Text style={styles.feedbackText}>i really like this!</Text>
+          <Text style={styles.feedbackText}>I really like this!</Text>
         </TouchableOpacity>
       </View>
 
