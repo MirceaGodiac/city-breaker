@@ -1,8 +1,8 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import React, { useState, useEffect } from "react";
-import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
-import addScanForUser from "../firebase_files/upload_scan"
-import * as ImagePicker from 'expo-image-picker';
+import { getAuth, onAuthStateChanged, User } from "firebase/auth";
+import addScanForUser from "../firebase_files/upload_scan";
+import * as ImagePicker from "expo-image-picker";
 import { Alert } from "react-native";
 
 function Home() {
@@ -33,24 +33,20 @@ function Home() {
         setPhotoBase64(base64Image);
         if (base64Image) {
           await addScanForUser(
-            user.uid,           // user ID
-            "location",         // you can add location logic here
+            user.uid, // user ID
+            "location", // you can add location logic here
             base64Image
           );
-          Alert.alert(
-            "Success",
-            "Image uploaded successfully!",
-            [{ text: "OK" }]
-          );
+          Alert.alert("Success", "Image uploaded successfully!", [
+            { text: "OK" },
+          ]);
         }
       }
     } catch (error) {
-      console.error('Failed to pick image:', error);
-      Alert.alert(
-        "Error",
-        "Failed to upload image. Please try again.",
-        [{ text: "OK" }]
-      );
+      console.error("Failed to pick image:", error);
+      Alert.alert("Error", "Failed to upload image. Please try again.", [
+        { text: "OK" },
+      ]);
     }
   };
 
@@ -59,13 +55,19 @@ function Home() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Home Screen</Text>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={pickImage}
-      >
-        <Text style={styles.buttonText}>Choose Image</Text>
-      </TouchableOpacity>
+      {photoBase64 ? (
+        <Image
+          source={{ uri: `data:image/jpeg;base64,${photoBase64}` }}
+          style={styles.fullScreenImage}
+        />
+      ) : (
+        <>
+          <Text style={styles.text}>Home Screen</Text>
+          <TouchableOpacity style={styles.button} onPress={pickImage}>
+            <Text style={styles.buttonText}>Choose Image</Text>
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 }
@@ -99,6 +101,11 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  fullScreenImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
 });
 

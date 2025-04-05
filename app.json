@@ -23,6 +23,14 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "photosPermission": "This app uses your camera to take photos of your city"
+        }
+      ]
+    ]
   }
 }

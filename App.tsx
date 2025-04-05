@@ -14,6 +14,7 @@ import Profile from "./app/screens/Profile";
 import Settings from "./app/screens/Settings";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "./assets/firebase-config";
+import LandmarkDetails from "./app/screens/LandmarkDetails";
 
 const Stack = createNativeStackNavigator();
 const BottomTab = createBottomTabNavigator();
@@ -66,11 +67,18 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">
         {user ? (
-          <Stack.Screen
-            name="InsideLayout"
-            component={InsideLayout}
-            options={{ headerShown: false }}
-          />
+          <>
+            <Stack.Screen
+              name="InsideLayout"
+              component={InsideLayout}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="LandmarkDetails"
+              component={LandmarkDetails}
+              options={{ headerShown: false }}
+            />
+          </>
         ) : (
           <Stack.Screen
             name="Login"
@@ -105,6 +113,9 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 3,
+    margin: 10,
+    borderRadius: 20,
+    borderTopWidth: 0,
   },
   tabBarLabel: {
     fontSize: 12,
