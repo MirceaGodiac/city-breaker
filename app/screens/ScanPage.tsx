@@ -21,10 +21,12 @@ import { FontAwesome6 } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import * as FileSystem from "expo-file-system";
 import axios from "axios";
+import * as ImagePicker from "expo-image-picker";
+import { analyzeLandmarkImage } from "../claude";
 
 const VISION_API_KEY = "AIzaSyAnHyrHJLYMvcRD38LwYsHCIc9WqWS34vg";
-const OPENAI_API_KEY =
-  "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";
+const CLAUDE_API_KEY =
+  "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";
 
 export default function App() {
   const navigation = useNavigation();
@@ -53,6 +55,16 @@ export default function App() {
     setUri(photo?.uri ?? null);
   };
 
+  const pickImageFromGallery = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+    if (!result.canceled) {
+      setUri(result.assets[0].uri);
+    }
+  };
+
   const analyseImage = async () => {
     if (!uri) {
       Alert.alert("Please capture a photo first!");
@@ -77,141 +89,22 @@ export default function App() {
         visionResponse.data.responses[0]?.landmarkAnnotations;
       if (landmarkAnnotations && landmarkAnnotations.length > 0) {
         const detectedLandmarkName = landmarkAnnotations[0].description;
-        // Extract geo coordinates from API response
         const latLng =
           landmarkAnnotations[0].locations &&
           landmarkAnnotations[0].locations[0]?.latLng;
         const locationGPS = latLng
           ? `${latLng.latitude},${latLng.longitude}`
           : "0,0";
-        const chatGPTResponse = await axios.post(
-          "https://api.openai.com/v1/chat/completions",
-          {
-            model: "gpt-3.5-turbo",
-            messages: [
-              {
-                role: "system",
-                content: `You are an expert and passionate tour guide AI.`,
-              },
-              {
-                role: "user",
-                content: `Tell me about ${detectedLandmarkName}, fun facts and about stuff around it in 500 words. Only if no information is available, say: "Sorry, no information on this landmark. Add fun facts or history in bullet points in max 500 words. Provide JUST a JSON object with the text and another JSON with characteristics of each landmark.
-                The characteristics JSON should include: for each of the below categories, provide a list of items that belong to that category, you can assign multiple items to a category. Use JUST categories and items listed below. Thanks!:
-                ARCHITECTURE:
-                - CLASSICAL
-                - ROMANESQUE
-                - GOTHIC
-                - BAROQUE
-                - VICTORIAN
-                - NEOCLASSICAL
-                - MODERNIST
-                - BRUTALIST
-                - POSTMODERN
-                - FUTURISTIC
-                - VERNACULAR
-                - TRADITIONAL
-                - MINIMALIST
-                - INDUSTRIAL
-                - ISLAMIC
-                - BYZANTINE
-                - MOORISH
+        console.log("Detected Landmark:", detectedLandmarkName);
 
-                HISTORICAL_ERA:
-                - ANCIENT (BEFORE 500 AD)
-                - MEDIEVAL (500–1500)
-                - RENAISSANCE (1500–1700)
-                - CLASSICAL REVIVAL (1700–1850)
-                - INDUSTRIAL ERA (1850–1900)
-                - MODERN (1900–1970)
-                - CONTEMPORARY (1970–PRESENT)
-
-                CULTURAL:
-                - EUROPEAN
-                - EASTERN EUROPEAN
-                - MIDDLE EASTERN
-                - NORTH AFRICAN
-                - SUB-SAHARAN AFRICAN
-                - EAST ASIAN
-                - SOUTH ASIAN
-                - SOUTHEAST ASIAN
-                - LATIN AMERICAN
-                - INDIGENOUS
-                - NORDIC
-                - SLAVIC
-
-                LANDMARK_TYPE:
-                - RELIGIOUS (CHURCH, MOSQUE, TEMPLE)
-                - MILITARY (FORT, CASTLE, BUNKER)
-                - GOVERNMENTAL (PALACE, PARLIAMENT)
-                - RESIDENTIAL (HISTORIC HOUSES, MANORS)
-                - COMMERCIAL (OLD MARKETS, SHOPS)
-                - BRIDGES
-                - TOWERS
-                - OBELISKS
-                - RUINS
-                - WALLS 
-                - GATES
-                - SCULPTURES
-                - MONUMENTS
-                - FOUNTAINS
-                - MUSEUMS
-                - PLAZAS
-                - TOWN SQUARES
-
-                VIBE:
-                - COLORFUL
-                - SYMMETRICAL
-                - DETAILED
-                - ORNATE
-                - MINIMALIST
-                - GRAND
-                - RUSTIC
-                - SHARP
-                - SOFT 
-                - OVERGROWN 
-                - REFLECTIVE (GLASS, WATER)
-                - NIGHT-LIT
-                - STREET ART
-
-                EXPERIENCE_STYLE:
-                - PHOTO SPOT
-                - PANORAMIC VIEW
-                - INSTAGRAMMABLE
-                - PEACEFUL
-                - CROWD FAVORITE
-                - HIDDEN GEM
-                - ROMANTIC
-                - FAMILY-FRIENDLY
-                - ADVENTURE INVOLVED`,
-              },
-            ],
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${OPENAI_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        const responseContent =
-          chatGPTResponse.data.choices[0]?.message?.content;
-        // New: Remove markdown fences if present
-        const cleanedResponse = responseContent
-          .replace(/```(json\s*)?/gi, "")
-          .replace(/```/gi, "")
-          .trim();
-        let parsedResponse;
-        try {
-          parsedResponse = JSON.parse(cleanedResponse);
-        } catch (e) {
-          parsedResponse = { text: cleanedResponse, characteristics: {} };
-        }
+        const string_result = await analyzeLandmarkImage(detectedLandmarkName);
+        const result = JSON.parse(string_result);
         navigation.navigate("LandmarkDetails", {
-          info: parsedResponse.text,
-          characteristics: parsedResponse.characteristics,
+          info: result.text,
+          characteristics: result.characteristics,
           landmarkName: detectedLandmarkName,
           base64: base64ImageData,
-          locationGPS, // now using the extracted GPS coordinates
+          locationGPS,
           timestamp: Date.now(),
           description: "",
         });
@@ -233,7 +126,6 @@ export default function App() {
           contentFit="cover"
           style={{ flex: 1, width: "100%", height: "100%" }}
         />
-        {/* Overlay buttons */}
         <View style={styles.overlayContainer}>
           <Pressable style={styles.retakeBtn} onPress={() => setUri(null)}>
             <AntDesign name="arrowleft" size={16} color="white" />
@@ -259,8 +151,12 @@ export default function App() {
         responsiveOrientationWhenOrientationLocked
       >
         <View style={styles.shutterContainer}>
-          <View></View>
-
+          <TouchableOpacity
+            onPress={pickImageFromGallery}
+            style={styles.galleryBtn}
+          >
+            <Feather name="image" size={24} color="white" />
+          </TouchableOpacity>
           <Pressable onPress={takePicture}>
             {({ pressed }) => (
               <View
@@ -282,7 +178,7 @@ export default function App() {
               </View>
             )}
           </Pressable>
-          <View />
+          <View style={{ width: 50 }} />
         </View>
       </CameraView>
     );
@@ -328,7 +224,6 @@ const styles = StyleSheet.create({
     height: 70,
     borderRadius: 50,
   },
-  // New styles for overlay buttons
   overlayContainer: {
     position: "absolute",
     top: 0,
@@ -369,5 +264,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginLeft: 10,
+  },
+  galleryBtn: {
+    backgroundColor: "transparent",
+    padding: 10,
+    borderRadius: 20,
   },
 });

@@ -180,16 +180,20 @@ export default function LandmarkDetails({ route }: Props) {
 
       <View style={styles.tagsSection}>
         <Text style={styles.tagsTitle}>Tags:</Text>
-        <View style={styles.tagsWrapper}>
-          {Object.keys(characteristics).map((tag) => (
-            <View key={tag} style={styles.tag}>
-              <Text style={styles.tagTitle}>{tag}</Text>
-              <Text style={styles.tagItems}>
-                {characteristics[tag].join(", ")}
-              </Text>
-            </View>
-          ))}
-        </View>
+        {Object.keys(characteristics).length > 0 ? (
+          <View style={styles.tagsWrapper}>
+            {Object.entries(characteristics as { [key: string]: string[] }).map(
+              ([category, items]) => (
+                <View key={category} style={styles.tag}>
+                  <Text style={styles.tagTitle}>{category}</Text>
+                  <Text style={styles.tagItems}>{items.join(", ")}</Text>
+                </View>
+              )
+            )}
+          </View>
+        ) : (
+          <Text style={styles.info}>No characteristics provided.</Text>
+        )}
       </View>
 
       <Button

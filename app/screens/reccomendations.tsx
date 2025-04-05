@@ -10,28 +10,67 @@ import {
   StatusBar,
   Platform,
 } from "react-native";
-import { findNearbyPlaces } from "../firebase_files/find-nearby-places";
+import { findNearbyPlaces } from "../firebase_files/find-nearby-restaurants";
 import { findNearbyExperiences } from "../firebase_files/find-nearby-experiences";
+import { findNearbyLandmarks } from "../firebase_files/find-nearby-landmarks";
 import { Ionicons } from "@expo/vector-icons";
+import * as Location from "expo-location";
 
 interface NearbyPlacesScreenProps {
   navigation: any;
 }
 
-type SearchTab = "Restaurants" | "Experiences";
+type SearchTab = "Restaurants" | "Experiences" | "Landmarks";
 
 const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
   navigation,
 }) => {
   const [location, setLocation] = useState("");
+  const [adress, setAdress] = useState("");
   const [places, setPlaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<SearchTab>("Restaurants");
+  const [userCoords, setUserCoords] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [inputType, setInputType] = useState("default");
   // Cache results per tab; key are the tab names.
   const [cachedResults, setCachedResults] = useState<{
     [key in SearchTab]?: any[];
   }>({});
+
+  const [searchRadius, setSearchRadius] = useState(1000000); // Default search radius
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        console.error("Permission to access location was denied");
+        return;
+      }
+      let location = await Location.getCurrentPositionAsync({});
+      setUserCoords({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (userCoords && !location.trim()) {
+      (async () => {
+        let [result] = await Location.reverseGeocodeAsync(userCoords);
+        let formattedAddress =
+          result.name && result.city
+            ? `${result.name}, ${result.city}`
+            : result.city || "";
+        setLocation(formattedAddress);
+        setAdress(formattedAddress);
+      })();
+    }
+  }, [userCoords, location]);
 
   const searchPlaces = async () => {
     if (!location.trim()) return;
@@ -43,6 +82,15 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
       let results;
       if (selectedTab === "Restaurants") {
         results = await findNearbyPlaces(location);
+      } else if (selectedTab === "Landmarks") {
+        results = await findNearbyLandmarks(
+          location,
+          userCoords!.latitude,
+          userCoords!.longitude,
+          inputType,
+          searchRadius
+          // Provide an empty array or relevant keywords
+        );
       } else {
         results = await findNearbyExperiences(location);
       }
@@ -75,6 +123,19 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
       setPlaces([]);
     }
   }, [location]);
+
+  // New function to update search field with the user's location
+  const updateUserLocation = async () => {
+    if (userCoords) {
+      let [result] = await Location.reverseGeocodeAsync(userCoords);
+      let formattedAddress =
+        result.name && result.city
+          ? `${result.name}, ${result.city}`
+          : result.city || "";
+      setLocation(formattedAddress);
+      setAdress(formattedAddress);
+    }
+  };
 
   const renderPlaceItem = ({ item }: { item: any }) => (
     <TouchableOpacity
@@ -126,12 +187,29 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
           onChangeText={setLocation}
           onSubmitEditing={searchPlaces}
         />
-        <TouchableOpacity style={styles.searchButton} onPress={searchPlaces}>
+        {/* New location button */}
+        <TouchableOpacity
+          style={styles.searchButton}
+          onPress={() => {
+            updateUserLocation();
+            setInputType("default");
+          }}
+        >
+          <Ionicons name="location-outline" size={24} color="white" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.searchButton}
+          onPress={() => {
+            searchPlaces();
+            setInputType("default");
+          }}
+        >
           <Ionicons name="search" size={24} color="white" />
         </TouchableOpacity>
       </View>
 
-      {/* New Tabs below search bar */}
+      {/* Updated Tabs below search bar */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[
@@ -147,6 +225,22 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
             ]}
           >
             Restaurants
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            selectedTab === "Landmarks" && styles.tabActive,
+          ]}
+          onPress={() => setSelectedTab("Landmarks")}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              selectedTab === "Landmarks" && styles.tabTextActive,
+            ]}
+          >
+            Landmarks
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -221,6 +315,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
+    marginRight: 8,
   },
   tabContainer: {
     flexDirection: "row",
