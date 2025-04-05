@@ -1,4 +1,4 @@
-import React, { useState } from "react"; // added useState
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -15,11 +15,12 @@ import {
   getDatabase,
   ref,
   push,
-  set,
   update,
   runTransaction,
-} from "firebase/database"; // added runTransaction
+} from "firebase/database";
 import { FontAwesome } from "@expo/vector-icons";
+import { Audio } from "expo-av";
+import * as FileSystem from "expo-file-system";
 
 type LandmarkDetailsRouteProp = RouteProp<
   {
@@ -42,8 +43,7 @@ type Props = {
 
 export default function LandmarkDetails({ route }: Props) {
   const navigation = useNavigation();
-  const [selectedPreference, setSelectedPreference] = useState<string>(""); // new state
-
+  const [selectedPreference, setSelectedPreference] = useState<string>("");
   const {
     info,
     characteristics,
@@ -54,6 +54,52 @@ export default function LandmarkDetails({ route }: Props) {
     description,
   } = route.params;
 
+  // Function to play TTS audio of the "info" text using Google TTS API.
+  const playInfoAudio = async () => {
+    try {
+      // Ensure that the audio plays in silent mode (especially on iOS)
+      await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+      
+      const apiKey = "AIzaSyA9p8_jce6LBPwXB_BoHOMosBaLo85yeF8";
+      const ttsUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
+      const requestBody = {
+        input: { text: info },
+        voice: { languageCode: "en-US", ssmlGender: "NEUTRAL" },
+        audioConfig: { audioEncoding: "MP3" },
+      };
+
+      const response = await fetch(ttsUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+
+      const data = await response.json();
+      console.log("TTS API response:", data); // Check the response
+
+      if (!data.audioContent) {
+        throw new Error("No audio content returned from TTS API");
+      }
+      
+      // Write the base64 audio content to a file in the cache directory
+      const fileUri = FileSystem.cacheDirectory + "ttsAudio.mp3";
+      await FileSystem.writeAsStringAsync(fileUri, data.audioContent, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      console.log("Audio file written to:", fileUri);
+
+      // Load and play the audio file
+      const { sound } = await Audio.Sound.createAsync({ uri: fileUri });
+      sound.setOnPlaybackStatusUpdate((status) =>
+        console.log("Playback status:", status)
+      );
+      await sound.playAsync();
+    } catch (error) {
+      console.error("Error playing TTS audio:", error);
+      Alert.alert("Playback Error", "Unable to play audio at this time.");
+    }
+  };
+
   const updateUserPreferences = async (
     tagGroups: { [key: string]: string[] },
     preference: string
@@ -63,19 +109,14 @@ export default function LandmarkDetails({ route }: Props) {
       const uid = auth.currentUser?.uid;
       if (!uid) throw new Error("User not authenticated");
 
-      // Define the increment based on user feedback
       let delta = 0;
       if (preference === "thumbsDown") delta = -1;
       else if (preference === "thumbsUp") delta = 1;
       else if (preference === "heart") delta = 2;
 
-      // For each tag group (ARCHITECTURE, HISTORICAL ERA, etc.)
       Object.entries(tagGroups).forEach(([groupKey, tags]) => {
-        const userTagRef = ref(db, `USERS/${uid}/${groupKey.toUpperCase()}`);
-
         tags.forEach((tag) => {
-          const tagKey = tag.toLowerCase(); // Match keys in lowercase
-
+          const tagKey = tag.toLowerCase();
           runTransaction(
             ref(db, `USERS/${uid}/${groupKey.toUpperCase()}/${tagKey}`),
             (currentValue) => {
@@ -83,7 +124,7 @@ export default function LandmarkDetails({ route }: Props) {
                 return preference === "thumbsDown" ? 0 : delta;
               }
               const newValue = currentValue + delta;
-              return newValue < 0 ? 0 : newValue; // Avoid negative values
+              return newValue < 0 ? 0 : newValue;
             }
           );
         });
@@ -111,7 +152,7 @@ export default function LandmarkDetails({ route }: Props) {
         locationName: landmarkName,
         time: timestamp,
         description,
-        tags: characteristics, // new: include tags object
+        tags: characteristics,
       };
       await update(ref(db, "USERS/" + uid + "/PRIVATE_SCANS"), {
         [scanID]: scanRecord,
@@ -137,6 +178,12 @@ export default function LandmarkDetails({ route }: Props) {
         <ScrollView style={styles.infoContainer}>
           <Text style={styles.info}>{info}</Text>
         </ScrollView>
+
+        {/* New button to play audio version of the info text */}
+        <TouchableOpacity style={styles.audioButton} onPress={playInfoAudio}>
+          <FontAwesome name="microphone" size={24} color="white" />
+          <Text style={styles.audioButtonText}>Play Info Audio</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.feedbackContainer}>
@@ -206,7 +253,7 @@ export default function LandmarkDetails({ route }: Props) {
               locationGPS,
               timestamp,
               description,
-              tags: characteristics, // new: add tags field
+              tags: characteristics,
             },
             isPublic: true,
           });
@@ -250,14 +297,29 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 15,
   },
+  infoContainer: {
+    maxHeight: 1500,
+  },
   info: {
     fontSize: 16,
     color: "#555",
     marginBottom: 15,
     lineHeight: 22,
   },
-  infoContainer: {
-    maxHeight: 1500,
+  audioButton: {
+    flexDirection: "row",
+    backgroundColor: "#007AFF",
+    padding: 10,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 15,
+  },
+  audioButtonText: {
+    color: "white",
+    marginLeft: 8,
+    fontSize: 16,
+    fontWeight: "600",
   },
   tagsSection: {
     backgroundColor: "#fff",
@@ -314,6 +376,6 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   selectedButton: {
-    backgroundColor: "#cce5ff", // highlight style
+    backgroundColor: "#cce5ff",
   },
 });
