@@ -13,6 +13,7 @@ import {
   View,
   Alert,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
 import { AntDesign } from "@expo/vector-icons";
@@ -239,9 +240,19 @@ export default function App() {
             <AntDesign name="arrowleft" size={16} color="white" />
             <Text style={styles.retakeBtnText}>Retake Photo</Text>
           </Pressable>
-          <TouchableOpacity style={styles.spotBtn} onPress={analyseImage}>
-            <FontAwesome6 name="star" size={18} color="white" />
-            <Text style={styles.spotBtnText}>Spot it!</Text>
+          <TouchableOpacity
+            style={styles.spotBtn}
+            onPress={analyseImage}
+            disabled={loading} // disable the button while loading
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <>
+                <FontAwesome6 name="star" size={18} color="white" />
+                <Text style={styles.spotBtnText}>Spot it!</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
       </View>

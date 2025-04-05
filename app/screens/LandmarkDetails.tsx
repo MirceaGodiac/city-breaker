@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Button,
   Alert,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { RouteProp, useNavigation } from "@react-navigation/native";
 import { app, auth } from "../../assets/firebase-config";
@@ -21,6 +22,7 @@ import {
 import { FontAwesome } from "@expo/vector-icons";
 import { Audio } from "expo-av";
 import * as FileSystem from "expo-file-system";
+import { Ionicons } from "@expo/vector-icons"; // using Ionicons for play/pause
 
 type LandmarkDetailsRouteProp = RouteProp<
   {
@@ -44,6 +46,10 @@ type Props = {
 export default function LandmarkDetails({ route }: Props) {
   const navigation = useNavigation();
   const [selectedPreference, setSelectedPreference] = useState<string>("");
+  const [audioLoading, setAudioLoading] = useState<boolean>(false);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+
   const {
     info,
     characteristics,
@@ -54,49 +60,72 @@ export default function LandmarkDetails({ route }: Props) {
     description,
   } = route.params;
 
-  // Function to play TTS audio of the "info" text using Google TTS API.
-  const playInfoAudio = async () => {
-    try {
-      // Ensure that the audio plays in silent mode (especially on iOS)
-      await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
-      
-      const apiKey = "AIzaSyA9p8_jce6LBPwXB_BoHOMosBaLo85yeF8";
-      const ttsUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
-      const requestBody = {
-        input: { text: info },
-        voice: { languageCode: "en-US", ssmlGender: "NEUTRAL" },
-        audioConfig: { audioEncoding: "MP3" },
-      };
-
-      const response = await fetch(ttsUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      });
-
-      const data = await response.json();
-      console.log("TTS API response:", data); // Check the response
-
-      if (!data.audioContent) {
-        throw new Error("No audio content returned from TTS API");
+  useEffect(() => {
+    return () => {
+      // This cleanup function is called when the component unmounts.
+      if (sound) {
+        sound.unloadAsync();
       }
-      
-      // Write the base64 audio content to a file in the cache directory
-      const fileUri = FileSystem.cacheDirectory + "ttsAudio.mp3";
-      await FileSystem.writeAsStringAsync(fileUri, data.audioContent, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-      console.log("Audio file written to:", fileUri);
+    };
+  }, [sound]);
 
-      // Load and play the audio file
-      const { sound } = await Audio.Sound.createAsync({ uri: fileUri });
-      sound.setOnPlaybackStatusUpdate((status) =>
-        console.log("Playback status:", status)
-      );
-      await sound.playAsync();
-    } catch (error) {
-      console.error("Error playing TTS audio:", error);
-      Alert.alert("Playback Error", "Unable to play audio at this time.");
+  // Function to handle audio button press with pause/resume functionality.
+  // Before any audio is loaded, the button shows the TTS PNG image.
+  // After the first press, it will toggle between play and pause icons.
+  const handleAudioPress = async () => {
+    // If audio is still loading, do nothing.
+    if (audioLoading) return;
+
+    if (!sound) {
+      // First press: load the audio.
+      setAudioLoading(true);
+      try {
+        await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+        const apiKey = "AIzaSyA9p8_jce6LBPwXB_BoHOMosBaLo85yeF8";
+        const ttsUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
+        const requestBody = {
+          input: { text: info },
+          voice: { languageCode: "en-US", ssmlGender: "NEUTRAL" },
+          audioConfig: { audioEncoding: "MP3" },
+        };
+
+        const response = await fetch(ttsUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        });
+
+        const data = await response.json();
+        if (!data.audioContent) {
+          throw new Error("No audio content returned from TTS API");
+        }
+
+        const fileUri = FileSystem.cacheDirectory + "ttsAudio.mp3";
+        await FileSystem.writeAsStringAsync(fileUri, data.audioContent, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+
+        const { sound: newSound } = await Audio.Sound.createAsync({ uri: fileUri });
+        // Remove logging from playback status update:
+        newSound.setOnPlaybackStatusUpdate(() => {});
+        setSound(newSound);
+        await newSound.playAsync();
+        setIsPlaying(true);
+      } catch (error) {
+        console.error("Error playing TTS audio:", error);
+        Alert.alert("Playback Error", "Unable to play audio at this time.");
+      } finally {
+        setAudioLoading(false);
+      }
+    } else {
+      // Subsequent presses toggle between pause and resume.
+      if (isPlaying) {
+        await sound.pauseAsync();
+        setIsPlaying(false);
+      } else {
+        await sound.playAsync();
+        setIsPlaying(true);
+      }
     }
   };
 
@@ -175,24 +204,35 @@ export default function LandmarkDetails({ route }: Props) {
           source={{ uri: `data:image/jpeg;base64,${base64}` }}
           style={styles.image}
         />
-        <ScrollView style={styles.infoContainer}>
-          <Text style={styles.info}>{info}</Text>
-        </ScrollView>
-
-        {/* New button to play audio version of the info text */}
-        <TouchableOpacity style={styles.audioButton} onPress={playInfoAudio}>
-          <FontAwesome name="microphone" size={24} color="white" />
-          <Text style={styles.audioButtonText}>Play Info Audio</Text>
-        </TouchableOpacity>
+        <View style={styles.infoContainerWrapper}>
+          <ScrollView style={styles.infoContainer}>
+            <Text style={styles.info}>{info}</Text>
+          </ScrollView>
+          <TouchableOpacity style={styles.audioButtonCircle} onPress={handleAudioPress}>
+            {audioLoading ? (
+              <ActivityIndicator size="small" color="#007AFF" />
+            ) : !sound ? (
+              <Image
+                source={require("../../assets/tts.png")}
+                style={styles.audioIcon}
+              />
+            ) : isPlaying ? (
+              <Ionicons name="pause" size={24} color="black" />
+            ) : (
+              <Ionicons name="play" size={24} color="black" />
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
+      {/* Feedback and other UI elements */}
       <View style={styles.feedbackContainer}>
         <TouchableOpacity
           style={[
             styles.feedbackButton,
             selectedPreference === "thumbsDown" && styles.selectedButton,
           ]}
-          onPress={async () => {
+          onPress={() => {
             setSelectedPreference("thumbsDown");
           }}
         >
@@ -228,7 +268,7 @@ export default function LandmarkDetails({ route }: Props) {
       <View style={styles.tagsSection}>
         <Text style={styles.tagsTitle}>Tags:</Text>
         <View style={styles.tagsWrapper}>
-          {Object.keys(characteristics).map((tag) => (
+          {Object.keys(characteristics || {}).map((tag) => (
             <View key={tag} style={styles.tag}>
               <Text style={styles.tagTitle}>{tag}</Text>
               <Text style={styles.tagItems}>
@@ -243,7 +283,7 @@ export default function LandmarkDetails({ route }: Props) {
         title="Make Public Scan"
         onPress={async () => {
           if (selectedPreference !== "") {
-            await updateUserPreferences(characteristics, selectedPreference!);
+            await updateUserPreferences(characteristics, selectedPreference);
           }
           navigation.navigate("ScanRating", {
             scanData: {
@@ -274,6 +314,7 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   card: {
+    position: "relative", // So that absolutely positioned children are relative to the card
     marginTop: 50,
     backgroundColor: "#ffffff",
     borderRadius: 10,
@@ -297,29 +338,57 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 15,
   },
+  infoContainerWrapper: {
+    position: "relative", // ensure the audio button can be positioned relative to this container
+    overflow: "visible",
+  },
   infoContainer: {
-    maxHeight: 1500,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 15,
+    overflow: "visible",
   },
   info: {
     fontSize: 16,
     color: "#555",
-    marginBottom: 15,
     lineHeight: 22,
   },
-  audioButton: {
+  // Position the audio button so its center is exactly at the bottom right of the wrapper
+  audioButtonCircle: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    transform: [{ translateX: 25 }, { translateY: 25 }],
+    width: 50,
+    height: 50,
+  },
+  audioIcon: {
+    width: 50,
+    height: 50,
+    resizeMode: "contain",
+  },
+  feedbackContainer: {
     flexDirection: "row",
-    backgroundColor: "#007AFF",
-    padding: 10,
+    justifyContent: "space-between",
+    marginVertical: 15,
+  },
+  feedbackButton: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+    marginHorizontal: 5,
+    paddingVertical: 10,
     borderRadius: 8,
     alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 15,
   },
-  audioButtonText: {
-    color: "white",
-    marginLeft: 8,
-    fontSize: 16,
-    fontWeight: "600",
+  feedbackText: {
+    marginTop: 5,
+    fontSize: 12,
+    textAlign: "center",
+    color: "#333",
+  },
+  selectedButton: {
+    backgroundColor: "#cce5ff",
   },
   tagsSection: {
     backgroundColor: "#fff",
@@ -355,27 +424,5 @@ const styles = StyleSheet.create({
   tagItems: {
     fontSize: 12,
     color: "#555",
-  },
-  feedbackContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 15,
-  },
-  feedbackButton: {
-    flex: 1,
-    backgroundColor: "#ffffff",
-    marginHorizontal: 5,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  feedbackText: {
-    marginTop: 5,
-    fontSize: 12,
-    textAlign: "center",
-    color: "#333",
-  },
-  selectedButton: {
-    backgroundColor: "#cce5ff",
   },
 });
