@@ -15,8 +15,8 @@ import {
 } from "firebase/auth";
 
 function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("raresb.cazan@gmail.com");
+  const [password, setPassword] = useState("1976@Mami");
   const [loading, setIsLoading] = useState(false);
   const local_auth = auth; // Assuming you have a custom hook for authentication
 
