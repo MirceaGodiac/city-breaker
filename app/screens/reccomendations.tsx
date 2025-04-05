@@ -26,6 +26,10 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({ navigation }) =
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<SearchTab>("Restaurants");
+  // Cache results per tab; key are the tab names.
+  const [cachedResults, setCachedResults] = useState<{
+    [key in SearchTab]?: any[];
+  }>({});
 
   const searchPlaces = async () => {
     if (!location.trim()) return;
@@ -40,6 +44,8 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({ navigation }) =
       } else {
         results = await findNearbyExperiences(location);
       }
+      // Cache the results for the current tab
+      setCachedResults(prev => ({ ...prev, [selectedTab]: results }));
       setPlaces(results);
     } catch (err) {
       setError("Failed to find nearby places. Please try again.");
@@ -49,12 +55,24 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({ navigation }) =
     }
   };
 
-  // Refresh the search when the selectedTab changes
+  // When the selectedTab changes, check if results exist in cache.
   useEffect(() => {
     if (location.trim()) {
-      searchPlaces();
+      if (cachedResults[selectedTab]) {
+        setPlaces(cachedResults[selectedTab]!);
+      } else {
+        searchPlaces();
+      }
     }
   }, [selectedTab]);
+
+  // Optional: When location changes, clear the cache (assuming a new search)
+  useEffect(() => {
+    if (!location.trim()) {
+      setCachedResults({});
+      setPlaces([]);
+    }
+  }, [location]);
 
   const renderPlaceItem = ({ item }: { item: any }) => (
     <TouchableOpacity
@@ -72,9 +90,7 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({ navigation }) =
           )}
         </View>
       </View>
-
       <Text style={styles.address}>{item.address}</Text>
-
       <View style={styles.detailsContainer}>
         {item.openNow !== undefined && (
           <Text
@@ -86,7 +102,6 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({ navigation }) =
             {item.openNow ? "Open Now" : "Closed"}
           </Text>
         )}
-
         <View style={styles.typeContainer}>
           {item.types.slice(0, 2).map((type: string, index: number) => (
             <Text key={index} style={styles.type}>
@@ -101,7 +116,6 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({ navigation }) =
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
@@ -152,7 +166,6 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({ navigation }) =
       </View>
 
       {error && <Text style={styles.errorText}>{error}</Text>}
-
       {loading ? (
         <ActivityIndicator style={styles.loader} size="large" color="#0066cc" />
       ) : (
