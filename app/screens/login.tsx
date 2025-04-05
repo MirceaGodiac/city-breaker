@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
+  StatusBar,
 } from "react-native";
 import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
@@ -32,6 +33,8 @@ function Login() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Set dark status bar */}
+      <StatusBar barStyle="dark-content" />
       <View style={styles.headerContainer}>
         <Text style={styles.headerText}>CityBreaker</Text>
         <Text style={styles.subHeaderText}>Discover your next adventure</Text>
@@ -60,9 +63,6 @@ function Login() {
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Register")}>
           <Text style={styles.linkText}>Don't have an account? Register</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.forgotPassword}>
-          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
         </TouchableOpacity>
         {loading && <ActivityIndicator size={"large"} />}
       </View>
@@ -117,14 +117,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
-  },
-  forgotPassword: {
-    alignItems: "center",
-    marginTop: 20,
-  },
-  forgotPasswordText: {
-    color: "#4A90E2",
-    fontSize: 14,
   },
   linkText: {
     textAlign: "center",

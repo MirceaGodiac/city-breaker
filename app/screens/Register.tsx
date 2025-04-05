@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
+  StatusBar,
+  Alert, // Import Alert
 } from "react-native";
 import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
@@ -30,8 +32,12 @@ function Register() {
       await createUserProfile();
       console.log(response);
       navigation.goBack();
-    } catch (error) {
-      console.error("Error signing up", error);
+    } catch (error: any) {
+      if (error.code === "auth/email-already-in-use") {
+        Alert.alert("Sign in error", "An account with this email already exists.");
+      } else {
+        Alert.alert("Sign in error", error.message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -39,7 +45,8 @@ function Register() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* ...header or logo if needed... */}
+      {/* Set dark status bar */}
+      <StatusBar barStyle="dark-content" />
       <View style={styles.formContainer}>
         <TextInput
           style={styles.input}
@@ -62,7 +69,9 @@ function Register() {
           <Text style={styles.buttonText}>Sign Up</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.linkText}>Already have an account? Log In</Text>
+          <Text style={styles.linkText}>
+            Already have an account? Log In
+          </Text>
         </TouchableOpacity>
         {loading && <ActivityIndicator size={"large"} />}
       </View>
