@@ -16,6 +16,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "./assets/firebase-config";
 import LandmarkDetails from "./app/screens/LandmarkDetails";
 import ScanRating from "./app/screens/ScanRating";
+import ReviewsScreen from "./app/screens/Reviews";  // import ReviewsScreen
 
 const Stack = createNativeStackNavigator();
 const BottomTab = createBottomTabNavigator();
@@ -57,11 +58,7 @@ export default function App() {
 
   useEffect(() => {
     onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser(user);
-      } else {
-        setUser(null);
-      }
+      setUser(user ? user : null);
     });
   }, []);
   return (
@@ -73,6 +70,16 @@ export default function App() {
               name="InsideLayout"
               component={InsideLayout}
               options={{ headerShown: false }}
+            />
+            {/* This is your separate Reviews screen */}
+            <Stack.Screen
+              name="Reviews"
+              component={ReviewsScreen}
+              options={{ 
+                title: "Reviews",
+                headerBackTitle: "Back",
+                headerBackTitleVisible: true 
+              }}
             />
             <Stack.Screen
               name="LandmarkDetails"
