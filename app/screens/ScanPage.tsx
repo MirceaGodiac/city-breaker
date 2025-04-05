@@ -13,6 +13,7 @@ import {
   View,
   Alert,
   TouchableOpacity,
+  ActivityIndicator, // <-- added import
 } from "react-native";
 import { Image } from "expo-image";
 import { AntDesign } from "@expo/vector-icons";
@@ -100,14 +101,6 @@ export default function App() {
           }
         );
         const landmarkInfo = chatGPTResponse.data.choices[0]?.message?.content;
-        navigation.navigate("LandmarkDetails", {
-          info: landmarkInfo,
-          landmarkName: detectedLandmarkName,
-          base64: base64ImageData,
-          locationGPS: "0,0", // dummy value; replace with real GPS if available
-          timestamp: Date.now(),
-          description: "",
-        });
       } else {
         Alert.alert("No landmark detected, please try again");
       }
@@ -184,6 +177,11 @@ export default function App() {
   return (
     <View style={styles.container}>
       {uri ? renderPicture() : renderCamera()}
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#4A90E2" />
+        </View>
+      )}
     </View>
   );
 }
@@ -221,7 +219,6 @@ const styles = StyleSheet.create({
     height: 70,
     borderRadius: 50,
   },
-  // New styles for overlay buttons
   overlayContainer: {
     position: "absolute",
     top: 0,
@@ -262,5 +259,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginLeft: 10,
+  },
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
