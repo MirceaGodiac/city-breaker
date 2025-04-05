@@ -8,7 +8,6 @@ export type BottomTabParamList = {
 
 export type RootStackParamList = {
   Login: undefined;
-  InsideLayout: NavigatorScreenParams<BottomTabParamList>;
   LandmarkDetails: {
     info?: string;
     landmarkName?: string;

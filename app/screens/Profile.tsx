@@ -35,16 +35,6 @@ function Profile() {
       <View style={[styles.section, { backgroundColor: sectionBackgroundColor }]}>
         <Text style={[styles.sectionTitle, { color: textColor }]}>Settings</Text>
         
-        <View style={styles.row}>
-          <Text style={[styles.rowLabel, { color: textColor }]}>Theme</Text>
-          <Switch
-            value={isLightTheme}
-            onValueChange={toggleTheme}
-            thumbColor="#4A90E2"
-            trackColor={{ false: "#767577", true: "#81b0ff" }}
-          />
-        </View>
-        
         <TouchableOpacity style={styles.button} onPress={handleSignOut}>
           <Text style={styles.buttonText}>Sign Out</Text>
         </TouchableOpacity>

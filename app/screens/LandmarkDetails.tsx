@@ -7,17 +7,23 @@ import {
   Button,
   Alert,
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { 
+  useNavigation, 
+  useRoute, 
+  RouteProp,
+  StackActions,
+  NavigationProp 
+} from "@react-navigation/native";
 import { app, auth } from "../../assets/firebase-config";
-import { getDatabase, ref, push, set, update } from "firebase/database";
+import { getDatabase, ref, push, update } from "firebase/database";
+import { RootStackParamList } from "../../NavigationTypes";
 
 export default function LandmarkDetails() {
-  const route = useRoute();
-  const navigation = useNavigation();
+  const route = useRoute<RouteProp<RootStackParamList, 'LandmarkDetails'>>();
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { info, landmarkName, base64, locationGPS, timestamp, description } =
     route.params || {};
 
-  // New function to directly upload a private scan without rating/description input
   const uploadPrivateScan = async () => {
     try {
       const db = getDatabase(app);
@@ -30,14 +36,14 @@ export default function LandmarkDetails() {
         locationGPS,
         locationName: landmarkName,
         time: timestamp,
-        description, // using the description passed (could be empty)
+        description,
       };
-      // Update PRIVATE_SCANS with full scanRecord as per scheme
       await update(ref(db, "USERS/" + uid + "/PRIVATE_SCANS"), {
         [scanID]: scanRecord,
       });
       Alert.alert("Success", "Private scan uploaded successfully.");
-      navigation.popToTop();
+      // Replace popToTop with dispatch(StackActions.popToTop())
+      navigation.dispatch(StackActions.popToTop());
     } catch (error: any) {
       Alert.alert(
         "Upload failed",
