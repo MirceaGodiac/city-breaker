@@ -1,23 +1,15 @@
 import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Button,
-  Alert,
-} from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { View, Text, StyleSheet, ScrollView, Button, Alert } from "react-native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { app, auth } from "../../assets/firebase-config";
-import { getDatabase, ref, push, set, update } from "firebase/database";
+import { getDatabase, ref, push, update } from "firebase/database";
+import { RootStackParamList } from "../../NavigationTypes";
 
 export default function LandmarkDetails() {
-  const route = useRoute();
+  const route = useRoute<RouteProp<RootStackParamList, "LandmarkDetails">>();
   const navigation = useNavigation();
-  const { info, landmarkName, base64, locationGPS, timestamp, description } =
-    route.params || {};
+  const { info, landmarkName, base64, locationGPS, timestamp, description } = route.params;
 
-  // New function to directly upload a private scan without rating/description input
   const uploadPrivateScan = async () => {
     try {
       const db = getDatabase(app);
@@ -30,19 +22,15 @@ export default function LandmarkDetails() {
         locationGPS,
         locationName: landmarkName,
         time: timestamp,
-        description, // using the description passed (could be empty)
+        description,
       };
-      // Update PRIVATE_SCANS with full scanRecord as per scheme
       await update(ref(db, "USERS/" + uid + "/PRIVATE_SCANS"), {
         [scanID]: scanRecord,
       });
       Alert.alert("Success", "Private scan uploaded successfully.");
-      navigation.popToTop();
+      navigation.dispatch(StackActions.popToTop());
     } catch (error: any) {
-      Alert.alert(
-        "Upload failed",
-        error.message || "Something went wrong during upload."
-      );
+      Alert.alert("Upload failed", error.message || "Something went wrong during upload.");
     }
   };
 
@@ -50,28 +38,10 @@ export default function LandmarkDetails() {
     <View style={styles.container}>
       <Text style={styles.title}>{landmarkName || "Landmark Details"}</Text>
       <ScrollView style={styles.scroll}>
-        <Text style={styles.infoText}>
-          {info || "No information available."}
-        </Text>
+        <Text style={styles.infoText}>{info || "No information available."}</Text>
       </ScrollView>
-      <Button
-        title="Make Public Scan"
-        onPress={() =>
-          navigation.navigate("ScanRating", {
-            scanData: {
-              info,
-              landmarkName,
-              base64,
-              locationGPS,
-              timestamp,
-              description,
-            },
-            isPublic: true,
-          })
-        }
-      />
+      <Button title="Make Public Scan" onPress={() => navigation.navigate("ScanRating", { scanData: { info, landmarkName, base64, locationGPS, timestamp, description }, isPublic: true })} />
       <View style={{ height: 10 }} />
-      {/* For private scans, directly call uploadPrivateScan */}
       <Button title="Save as Private Scan" onPress={uploadPrivateScan} />
       <View style={{ height: 10 }} />
       <Button title="Go Back" onPress={() => navigation.goBack()} />

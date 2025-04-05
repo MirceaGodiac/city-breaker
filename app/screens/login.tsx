@@ -8,7 +8,9 @@ import {
   ActivityIndicator,
 } from "react-native";
 import React, { useState } from "react";
+import { StatusBar } from "expo-status-bar"; // ...existing code...
 import { auth } from "../../assets/firebase-config"; // Assuming you have a custom hook for authentication
+import { Alert } from "react-native";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -31,8 +33,21 @@ function Login() {
         password
       );
       console.log(response);
-    } catch (error) {
-      console.error("Error signing in with email and password", error);
+    } catch (error : any) {
+      if (
+        error?.code === "auth/wrong-password" ||
+        error?.code === "auth/user-not-found"
+      ) {
+        Alert.alert(
+          "Login Error",
+          "Incorrect email or password. Please try again."
+        );
+      } else {
+        Alert.alert(
+          "Login Error",
+          "Something went wrong while trying to log in. Please try again!"
+        );
+      }
     } finally {
       setIsLoading(false);
     }
@@ -48,8 +63,13 @@ function Login() {
       );
       await createUserProfile();
       console.log(response);
-    } catch (error) {
-      console.error("Error signing up with email and password", error);
+    } catch (error: any) {
+      if (error?.code === "auth/email-already-in-use"){
+        Alert.alert("Sign In Error","An account with this email already exists. Please try another email address or consider logging in!");
+      }
+      else{
+        Alert.alert("Sign In Error","Something went wrong while trying to sign in...\nPlease try again!");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -57,6 +77,7 @@ function Login() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar style="dark" />
       <View style={styles.headerContainer}>
         <Text style={styles.headerText}>CityBreaker</Text>
         <Text style={styles.subHeaderText}>Discover your next adventure</Text>

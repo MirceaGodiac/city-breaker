@@ -1,9 +1,6 @@
-import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-// @ts-ignore
+import { StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
-// @ts-ignore
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
@@ -11,31 +8,30 @@ import Login from "./app/screens/login";
 import ScanPage from "./app/screens/ScanPage";
 import Reccomendations from "./app/screens/reccomendations";
 import Profile from "./app/screens/Profile";
-import Settings from "./app/screens/Settings";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "./assets/firebase-config";
 import LandmarkDetails from "./app/screens/LandmarkDetails";
 import ScanRating from "./app/screens/ScanRating";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth } from "./assets/firebase-config";
+import { ThemeProvider } from "./app/context/ThemeContext";
+import { RootStackParamList, BottomTabParamList } from "./NavigationTypes";
 
-const Stack = createNativeStackNavigator();
-const BottomTab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
+const BottomTab = createBottomTabNavigator<BottomTabParamList>();
 
 function InsideLayout() {
   return (
     <BottomTab.Navigator
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ focused, color }) => {
           let iconName;
           if (route.name === "ScanPage") {
             iconName = focused ? "scan" : "scan-outline";
-          } else if (route.name === "Reccomendations") {
+          } else if (route.name === "For You") {
             iconName = focused ? "list" : "list-outline";
           } else if (route.name === "Profile") {
             iconName = focused ? "person" : "person-outline";
-          } else if (route.name === "Settings") {
-            iconName = focused ? "settings" : "settings-outline";
           }
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return <Ionicons name={iconName} size={30} color={color} />;
         },
         tabBarActiveTintColor: "#007AFF",
         tabBarInactiveTintColor: "gray",
@@ -45,9 +41,8 @@ function InsideLayout() {
       })}
     >
       <BottomTab.Screen name="ScanPage" component={ScanPage} />
-      <BottomTab.Screen name="Reccomendations" component={Reccomendations} />
+      <BottomTab.Screen name="For You" component={Reccomendations} />
       <BottomTab.Screen name="Profile" component={Profile} />
-      <BottomTab.Screen name="Settings" component={Settings} />
     </BottomTab.Navigator>
   );
 }
@@ -57,69 +52,51 @@ export default function App() {
 
   useEffect(() => {
     onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser(user);
-      } else {
-        setUser(null);
-      }
+      setUser(user ? user : null);
     });
   }, []);
+
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
-        {user ? (
-          <>
+    <ThemeProvider>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Login">
+          {user ? (
+            <>
+              <Stack.Screen
+                name="InsideLayout"
+                component={InsideLayout}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen name="LandmarkDetails" component={LandmarkDetails} options={{ headerShown: false }} />
+              <Stack.Screen name="ScanRating" component={ScanRating} options={{ headerShown: false }} />
+            </>
+          ) : (
             <Stack.Screen
-              name="InsideLayout"
-              component={InsideLayout}
+              name="Login"
+              component={Login}
               options={{ headerShown: false }}
             />
-            <Stack.Screen
-              name="LandmarkDetails"
-              component={LandmarkDetails}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="ScanRating"
-              component={ScanRating}
-              options={{ headerShown: false }}
-            />
-          </>
-        ) : (
-          <Stack.Screen
-            name="Login"
-            component={Login}
-            options={{ headerShown: false }}
-          />
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </ThemeProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
   tabBar: {
-    height: 60,
+    height: 80,
     backgroundColor: "#ffffff",
     borderTopColor: "#e0e0e0",
-    paddingBottom: 5,
+    paddingBottom: 10,
     paddingTop: 5,
     elevation: 8,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
+    shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    margin: 10,
-    borderRadius: 20,
+    marginHorizontal: 0,
+    borderRadius: 0,
     borderTopWidth: 0,
   },
   tabBarLabel: {
