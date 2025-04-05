@@ -10,9 +10,9 @@ import {
   StatusBar,
   Platform,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { findNearbyPlaces } from "../firebase_files/find-nearby-places";
 import { findNearbyExperiences } from "../firebase_files/find-nearby-experiences";
-import { Ionicons } from "@expo/vector-icons";
 
 interface NearbyPlacesScreenProps {
   navigation: any;
@@ -20,25 +20,19 @@ interface NearbyPlacesScreenProps {
 
 type SearchTab = "Restaurants" | "Experiences";
 
-const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
-  navigation,
-}) => {
+const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({ navigation }) => {
   const [location, setLocation] = useState("");
   const [places, setPlaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<SearchTab>("Restaurants");
-  // Cache results per tab; key are the tab names.
-  const [cachedResults, setCachedResults] = useState<{
-    [key in SearchTab]?: any[];
-  }>({});
+  // Cache results per tab; keys are the tab names.
+  const [cachedResults, setCachedResults] = useState<{ [key in SearchTab]?: any[] }>({});
 
   const searchPlaces = async () => {
     if (!location.trim()) return;
-
     setLoading(true);
     setError(null);
-
     try {
       let results;
       if (selectedTab === "Restaurants") {
@@ -68,7 +62,7 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
     }
   }, [selectedTab]);
 
-  // Optional: When location changes, clear the cache (assuming a new search)
+  // Clear cache when location is empty.
   useEffect(() => {
     if (!location.trim()) {
       setCachedResults({});
@@ -134,34 +128,18 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
       {/* New Tabs below search bar */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
-          style={[
-            styles.tabButton,
-            selectedTab === "Restaurants" && styles.tabActive,
-          ]}
+          style={[styles.tabButton, selectedTab === "Restaurants" && styles.tabActive]}
           onPress={() => setSelectedTab("Restaurants")}
         >
-          <Text
-            style={[
-              styles.tabText,
-              selectedTab === "Restaurants" && styles.tabTextActive,
-            ]}
-          >
+          <Text style={[styles.tabText, selectedTab === "Restaurants" && styles.tabTextActive]}>
             Restaurants
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[
-            styles.tabButton,
-            selectedTab === "Experiences" && styles.tabActive,
-          ]}
+          style={[styles.tabButton, selectedTab === "Experiences" && styles.tabActive]}
           onPress={() => setSelectedTab("Experiences")}
         >
-          <Text
-            style={[
-              styles.tabText,
-              selectedTab === "Experiences" && styles.tabTextActive,
-            ]}
-          >
+          <Text style={[styles.tabText, selectedTab === "Experiences" && styles.tabTextActive]}>
             Experiences
           </Text>
         </TouchableOpacity>

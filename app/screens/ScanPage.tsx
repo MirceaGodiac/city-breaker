@@ -22,6 +22,7 @@ import { FontAwesome6 } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import * as FileSystem from "expo-file-system";
 import axios from "axios";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const VISION_API_KEY = "AIzaSyAnHyrHJLYMvcRD38LwYsHCIc9WqWS34vg";
 const OPENAI_API_KEY =
@@ -235,7 +236,7 @@ export default function App() {
           style={{ flex: 1, width: "100%", height: "100%" }}
         />
         {/* Overlay buttons */}
-        <View style={styles.overlayContainer}>
+        <SafeAreaView style={styles.overlayContainer}>
           <Pressable style={styles.retakeBtn} onPress={() => setUri(null)}>
             <AntDesign name="arrowleft" size={16} color="white" />
             <Text style={styles.retakeBtnText}>Retake Photo</Text>
@@ -254,7 +255,7 @@ export default function App() {
               </>
             )}
           </TouchableOpacity>
-        </View>
+        </SafeAreaView>
       </View>
     );
   };

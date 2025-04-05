@@ -16,6 +16,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "./assets/firebase-config";
 import LandmarkDetails from "./app/screens/LandmarkDetails";
 import ScanRating from "./app/screens/ScanRating";
+import ReviewsScreen from "./app/screens/Reviews"; // imported Reviews screen
 
 // Add custom scan button component
 const CustomScanButton = ({ onPress, accessibilityState, ...props }) => {
@@ -84,6 +85,7 @@ export default function App() {
       }
     });
   }, []);
+
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">
@@ -102,6 +104,11 @@ export default function App() {
             <Stack.Screen
               name="ScanRating"
               component={ScanRating}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="Reviews"
+              component={ReviewsScreen}
               options={{ headerShown: false }}
             />
           </>
