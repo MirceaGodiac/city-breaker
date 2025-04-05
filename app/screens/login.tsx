@@ -46,7 +46,7 @@ function Login() {
         email,
         password
       );
-      await createUserProfile(response.user.uid, response.user.email || '');
+      await createUserProfile();
       console.log(response);
     } catch (error) {
       console.error("Error signing up with email and password", error);
@@ -54,7 +54,6 @@ function Login() {
       setIsLoading(false);
     }
   }
-
 
   return (
     <SafeAreaView style={styles.container}>

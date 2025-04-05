@@ -1,38 +1,45 @@
 import { db, auth } from '../../assets/firebase-config';
-
-const USERS = 'users';
 import { ref, set, get } from 'firebase/database';
+
+const USERS = 'USERS'; // Changed to match Firebase path convention
 
 export interface UserProfile {
   email: string;
-  created: string;
-  lastLogin: string;
-  scans: {
-    [key: string]: {
-      location: string;
-      base64: string;
-      timestamp: string;
-    }
-  };
+  scans: Array<{
+    scanID: string;
+    location: string;
+    LandmarkNAME: string;
+  }>;
 }
 
-export async function createUserProfile(userId: string, email: string) {
-  const userRef = ref(db, `${USERS}/${userId}`);
-  const timestamp = new Date().toISOString();
+export async function createUserProfile() {
+  if (!auth.currentUser) {
+    throw new Error('No authenticated user found');
+  }
+
+  const userRef = ref(db, `${USERS}/${auth.currentUser.uid}`);
   
   const newUser: UserProfile = {
-    email: email,
-    created: timestamp,
-    lastLogin: timestamp,
-    scans: {}
+    email: auth.currentUser.email || '',
+    scans: []
   };
 
-  await set(userRef, newUser);
-  return newUser;
+  try {
+    await set(userRef, newUser);
+    return newUser;
+  } catch (error) {
+    console.error('Error creating user profile:', error);
+    throw error;
+  }
 }
 
 export async function getUserProfile(userId: string) {
   const userRef = ref(db, `${USERS}/${userId}`);
-  const snapshot = await get(userRef);
-  return snapshot.val() as UserProfile | null;
+  try {
+    const snapshot = await get(userRef);
+    return snapshot.val() as UserProfile | null;
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    throw error;
+  }
 }
