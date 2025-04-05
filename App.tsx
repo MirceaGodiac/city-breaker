@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   tabBar: {
-    height: 60,
+    height: 80,
     backgroundColor: "#ffffff",
     borderTopWidth: 1,
     borderTopColor: "#e0e0e0",
@@ -113,9 +113,10 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    margin: 10,
+    marginHorizontal: 10,
     borderRadius: 20,
     borderTopWidth: 0,
+    marginBottom: 20,
   },
   tabBarLabel: {
     fontSize: 12,

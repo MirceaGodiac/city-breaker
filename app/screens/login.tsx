@@ -32,7 +32,7 @@ function Login() {
       );
       console.log(response);
     } catch (error) {
-      console.error("Error signing in with email and password", error);
+      console.error("Error logging in with email and password", error);
     } finally {
       setIsLoading(false);
     }
