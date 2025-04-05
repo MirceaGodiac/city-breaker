@@ -15,6 +15,7 @@ import Settings from "./app/screens/Settings";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "./assets/firebase-config";
 import LandmarkDetails from "./app/screens/LandmarkDetails";
+import ScanRating from "./app/screens/ScanRating";
 
 const Stack = createNativeStackNavigator();
 const BottomTab = createBottomTabNavigator();
@@ -78,6 +79,11 @@ export default function App() {
               component={LandmarkDetails}
               options={{ headerShown: false }}
             />
+            <Stack.Screen
+              name="ScanRating"
+              component={ScanRating}
+              options={{ headerShown: false }}
+            />
           </>
         ) : (
           <Stack.Screen
@@ -101,7 +107,6 @@ const styles = StyleSheet.create({
   tabBar: {
     height: 60,
     backgroundColor: "#ffffff",
-    borderTopWidth: 1,
     borderTopColor: "#e0e0e0",
     paddingBottom: 5,
     paddingTop: 5,

@@ -5,7 +5,15 @@ import {
   useCameraPermissions,
 } from "expo-camera";
 import { useRef, useState } from "react";
-import { Button, Pressable, StyleSheet, Text, View, Alert } from "react-native";
+import {
+  Button,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  Alert,
+  TouchableOpacity,
+} from "react-native";
 import { Image } from "expo-image";
 import { AntDesign } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
@@ -95,6 +103,10 @@ export default function App() {
         navigation.navigate("LandmarkDetails", {
           info: landmarkInfo,
           landmarkName: detectedLandmarkName,
+          base64: base64ImageData,
+          locationGPS: "0,0", // dummy value; replace with real GPS if available
+          timestamp: Date.now(),
+          description: "",
         });
       } else {
         Alert.alert("No landmark detected, please try again");
@@ -120,10 +132,10 @@ export default function App() {
             <AntDesign name="arrowleft" size={16} color="white" />
             <Text style={styles.retakeBtnText}>Retake Photo</Text>
           </Pressable>
-          <Pressable style={styles.spotBtn} onPress={analyseImage}>
+          <TouchableOpacity style={styles.spotBtn} onPress={analyseImage}>
             <FontAwesome6 name="star" size={18} color="white" />
             <Text style={styles.spotBtnText}>Spot it!</Text>
-          </Pressable>
+          </TouchableOpacity>
         </View>
       </View>
     );
