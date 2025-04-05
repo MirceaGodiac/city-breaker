@@ -84,11 +84,98 @@ export default function App() {
             messages: [
               {
                 role: "system",
-                content: `You are a tour guide AI. Add fun facts or history in bullet points in max 500 words.`,
+                content: `You are an expert and passionate tour guide AI.`,
               },
               {
                 role: "user",
-                content: `Tell me about ${detectedLandmarkName}, and about stuff around it. Only if no information is available, say: "Sorry, no information on this landmark."`,
+                content: `Tell me about ${detectedLandmarkName}, fun facts and about stuff around it in 500 words. Only if no information is available, say: "Sorry, no information on this landmark. Add fun facts or history in bullet points in max 500 words. Provide JUST a JSON object with the text and another JSON with characteristics of each landmark.
+                The characteristics JSON should include: for each of the below categories, provide a list of items that belong to that category, you can assign multiple items to a category. Use JUST categories and items listed below. Thanks!:
+                Architecture:
+                - classical
+                - romanesque
+                - gothic
+                - baroque
+                - victorian
+                - neoclassical
+                - modernist
+                - brutalist
+                - postmodern
+                - futuristic
+                - vernacular
+                - traditional
+                - minimalist
+                - industrial
+                - islamic
+                - byzantine
+                - moorish
+
+                Historical Era:
+                - ancient (before 500 ad)
+                - medieval (500–1500)
+                - renaissance (1500–1700)
+                - classical revival (1700–1850)
+                - industrial era (1850–1900)
+                - modern (1900–1970)
+                - contemporary (1970–present)
+
+                Cultural:
+                - european
+                - eastern european
+                - middle eastern
+                - north african
+                - sub-saharan african
+                - east asian
+                - south asian
+                - southeast asian
+                - latin american
+                - indigenous
+                - nordic
+                - slavic
+
+                Landmark Type:
+                - religious (church, mosque, temple)
+                - military (fort, castle, bunker)
+                - governmental (palace, parliament)
+                - residential (historic houses, manors)
+                - commercial (old markets, shops)
+                - bridges
+                - towers
+                - obelisks
+                - ruins
+                - walls 
+                - gates
+                - sculptures
+                - monuments
+                - fountains
+                - museums
+                - plazas
+                - town squares
+
+                Vibe:
+                - colorful
+                - symmetrical
+                - detailed
+                - ornate
+                - minimalist
+                - grand
+                - rustic
+                - sharp
+                - soft 
+                - overgrown 
+                - reflective (glass, water)
+                - night-lit
+                - street art
+
+                Experience Style:
+                - photo spot
+                - panoramic view
+                - instagrammable
+                - peaceful
+                - crowd favorite
+                - hidden gem
+                - romantic
+                - family-friendly
+                - adventure involved`,
               },
             ],
           },
@@ -99,9 +186,22 @@ export default function App() {
             },
           }
         );
-        const landmarkInfo = chatGPTResponse.data.choices[0]?.message?.content;
+        const responseContent =
+          chatGPTResponse.data.choices[0]?.message?.content;
+        // New: Remove markdown fences if present
+        const cleanedResponse = responseContent
+          .replace(/```(json\s*)?/gi, "")
+          .replace(/```/gi, "")
+          .trim();
+        let parsedResponse;
+        try {
+          parsedResponse = JSON.parse(cleanedResponse);
+        } catch (e) {
+          parsedResponse = { text: cleanedResponse, characteristics: {} };
+        }
         navigation.navigate("LandmarkDetails", {
-          info: landmarkInfo,
+          info: parsedResponse.text,
+          characteristics: parsedResponse.characteristics,
           landmarkName: detectedLandmarkName,
           base64: base64ImageData,
           locationGPS: "0,0", // dummy value; replace with real GPS if available

@@ -12,70 +12,6 @@ import {
 import { Platform } from "react-native";
 import { findNearbyPlaces } from "../firebase_files/find-nearby-places";
 import { Ionicons } from "@expo/vector-icons";
-import axios from "axios"; // added import
-
-const OPENAI_API_KEY =
-  "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"; // Replace with your API key
-
-// Add your Google API key
-const GOOGLE_MAPS_API_KEY = "AIzaSyA9p8_jce6LBPwXB_BoHOMosBaLo85yeF8"; // Replace with your key
-
-// New helper to get embedding from OpenAI
-const getEmbedding = async (text: string): Promise<number[]> => {
-  // Call OpenAI’s embedding API using the text-embedding-ada-002 model
-  const response = await axios.post(
-    "https://api.openai.com/v1/embeddings",
-    {
-      input: text,
-      model: "text-embedding-ada-002",
-    },
-    {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-    }
-  );
-  return response.data.data[0].embedding;
-};
-
-// Helper to compute cosine similarity between two vectors
-const cosineSimilarity = (a: number[], b: number[]) => {
-  let dot = 0,
-    magA = 0,
-    magB = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    magA += a[i] ** 2;
-    magB += b[i] ** 2;
-  }
-  return dot / (Math.sqrt(magA) * Math.sqrt(magB));
-};
-
-// Replace dummy function with a real fetch for reviews
-const fetchTopReviews = async (place: any): Promise<string> => {
-  // Fetch the top 5 reviews for a place using its placeId
-  try {
-    const response = await axios.get(
-      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.placeId}&fields=reviews&key=${GOOGLE_MAPS_API_KEY}`
-    );
-    if (response.data.result && response.data.result.reviews) {
-      // Log the fetched reviews for verification
-      console.log(
-        "Fetched reviews for place",
-        place.placeId,
-        response.data.result.reviews
-      );
-      const reviews = response.data.result.reviews.slice(0, 10); // Get top 10 reviews
-      // Aggregate reviews text
-      return reviews.map((r: any) => r.text).join(" ");
-    }
-    return "";
-  } catch (err) {
-    console.error("Failed to fetch reviews", err);
-    return "";
-  }
-};
 
 interface NearbyPlacesScreenProps {
   navigation: any;
@@ -85,15 +21,9 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
   navigation,
 }) => {
   const [location, setLocation] = useState("");
-  const [reviewQuery, setReviewQuery] = useState(""); // new state for review criteria
   const [places, setPlaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // New function to handle category selection
-  const handleCategorySelect = (category: string) => {
-    setReviewQuery(category);
-  };
 
   const searchPlaces = async () => {
     if (!location.trim()) return;
@@ -103,23 +33,7 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
 
     try {
       const nearbyPlaces = await findNearbyPlaces(location);
-      let scoredPlaces = nearbyPlaces;
-      if (reviewQuery.trim()) {
-        const queryEmbedding = await getEmbedding(reviewQuery);
-        scoredPlaces = await Promise.all(
-          nearbyPlaces.map(async (place: any) => {
-            const reviewText = await fetchTopReviews(place);
-            const reviewEmbedding = await getEmbedding(reviewText);
-            const similarity = cosineSimilarity(
-              queryEmbedding,
-              reviewEmbedding
-            );
-            return { ...place, score: similarity };
-          })
-        );
-        scoredPlaces.sort((a: any, b: any) => b.score - a.score);
-      }
-      setPlaces(scoredPlaces);
+      setPlaces(nearbyPlaces);
     } catch (err) {
       setError("Failed to find nearby places. Please try again.");
       console.error(err);
@@ -174,43 +88,12 @@ const NearbyPlacesScreen: React.FC<NearbyPlacesScreenProps> = ({
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* New culinary categories circles */}
-      <View style={styles.circleContainer}>
-        <TouchableOpacity
-          style={styles.circleItem}
-          onPress={() => handleCategorySelect("Fine Dining")}
-        >
-          <Text style={styles.circleText}>Culinary</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.circleItem}
-          onPress={() => handleCategorySelect("Cafes")}
-        >
-          <Text style={styles.circleText}>Activities</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.circleItem}
-          onPress={() => handleCategorySelect("Street Food")}
-        >
-          <Text style={styles.circleText}>Landmarks</Text>
-        </TouchableOpacity>
-      </View>
-
       <View style={styles.searchContainer}>
-        {/* location input */}
         <TextInput
           style={styles.searchInput}
           placeholder="Enter location..."
           value={location}
           onChangeText={setLocation}
-          onSubmitEditing={searchPlaces}
-        />
-        {/* new natural language review query input */}
-        <TextInput
-          style={styles.reviewQueryInput}
-          placeholder="What are you in the mood for?"
-          value={reviewQuery}
-          onChangeText={setReviewQuery}
           onSubmitEditing={searchPlaces}
         />
         <TouchableOpacity style={styles.searchButton} onPress={searchPlaces}>
@@ -246,30 +129,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
-  circleContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-  },
-  circleItem: {
-    flex: 1,
-    height: 50,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: "#4A90E2",
-    justifyContent: "center",
-    alignItems: "center",
-    marginHorizontal: 4,
-  },
-  circleText: {
-    color: "#4A90E2",
-    fontSize: 12,
-    textAlign: "center",
-  },
   searchContainer: {
-    height: 150,
-    flexDirection: "column",
+    flexDirection: "row",
     padding: 16,
     backgroundColor: "white",
     shadowColor: "#000",
@@ -287,20 +148,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginRight: 8,
     fontSize: 16,
-    paddingVertical: 8, // added vertical padding
-    textAlignVertical: "center", // ensures text is centered vertically
-  },
-  reviewQueryInput: {
-    flex: 1,
-    height: 44,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    marginRight: 8,
-    fontSize: 16,
-    marginTop: 8,
-    paddingVertical: 8, // added vertical padding
-    textAlignVertical: "center", // ensures text is centered vertically
   },
   searchButton: {
     width: 44,
