@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   StatusBar,
 } from 'react-native';
+import { Platform } from 'react-native';
 import { findNearbyPlaces } from '../firebase_files/findNearbyPlaces';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -133,6 +134,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    paddingTop: Platform.OS === 'ios' ? 50 : 16,
   },
   searchInput: {
     flex: 1,
