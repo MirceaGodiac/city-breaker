@@ -38,7 +38,7 @@ export async function findNearbyPlaces(locationName: string): Promise<NearbyPlac
     const placesResponse = await client.placesNearby({
       params: {
         location: { lat, lng },
-        radius: 1000, // 1km radius
+        radius: 100, // 1km radius
         type: PlaceType1.restaurant,
         key: GOOGLE_MAPS_API_KEY
       }
