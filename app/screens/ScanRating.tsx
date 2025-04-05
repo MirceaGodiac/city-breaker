@@ -39,6 +39,7 @@ export default function ScanRating() {
         time: scanData.timestamp,
         description: desc,
         rating: rating,
+        tags: scanData.tags, // new: include tags from scanData
       };
       await set(ref(db, "SCANS/" + scanID), scanRecord);
       if (isPublic) {

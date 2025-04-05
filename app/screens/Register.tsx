@@ -10,21 +10,28 @@ import {
 import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { auth } from "../../assets/firebase-config";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserProfile } from "../firebase_files/create_user";
 
-function Login() {
-  const [email, setEmail] = useState("raresb.cazan@gmail.com");
-  const [password, setPassword] = useState("1976@Mami");
+function Register() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setIsLoading] = useState(false);
   const navigation = useNavigation();
 
-  async function handleLogin() {
+  async function handleSignUp() {
     setIsLoading(true);
     try {
-      const response = await signInWithEmailAndPassword(auth, email, password);
+      const response = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      await createUserProfile();
       console.log(response);
+      navigation.goBack();
     } catch (error) {
-      console.error("Error signing in", error);
+      console.error("Error signing up", error);
     } finally {
       setIsLoading(false);
     }
@@ -32,11 +39,7 @@ function Login() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.headerText}>CityBreaker</Text>
-        <Text style={styles.subHeaderText}>Discover your next adventure</Text>
-      </View>
-
+      {/* ...header or logo if needed... */}
       <View style={styles.formContainer}>
         <TextInput
           style={styles.input}
@@ -55,14 +58,11 @@ function Login() {
           onChangeText={setPassword}
           secureTextEntry
         />
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Log In</Text>
+        <TouchableOpacity style={styles.button} onPress={handleSignUp}>
+          <Text style={styles.buttonText}>Sign Up</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate("Register")}>
-          <Text style={styles.linkText}>Don't have an account? Register</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.forgotPassword}>
-          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.linkText}>Already have an account? Log In</Text>
         </TouchableOpacity>
         {loading && <ActivityIndicator size={"large"} />}
       </View>
@@ -75,27 +75,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
-  headerContainer: {
-    flex: 0.4,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#4A90E2",
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-  },
-  headerText: {
-    fontSize: 36,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 10,
-  },
-  subHeaderText: {
-    fontSize: 16,
-    color: "#fff",
-    opacity: 0.8,
-  },
   formContainer: {
-    flex: 0.6,
+    flex: 1,
     paddingHorizontal: 30,
     paddingTop: 40,
   },
@@ -118,14 +99,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  forgotPassword: {
-    alignItems: "center",
-    marginTop: 20,
-  },
-  forgotPasswordText: {
-    color: "#4A90E2",
-    fontSize: 14,
-  },
   linkText: {
     textAlign: "center",
     color: "#007AFF",
@@ -134,4 +107,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Login;
+export default Register;

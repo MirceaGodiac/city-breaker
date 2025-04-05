@@ -111,6 +111,7 @@ export default function LandmarkDetails({ route }: Props) {
         locationName: landmarkName,
         time: timestamp,
         description,
+        tags: characteristics, // new: include tags object
       };
       await update(ref(db, "USERS/" + uid + "/PRIVATE_SCANS"), {
         [scanID]: scanRecord,
@@ -193,7 +194,10 @@ export default function LandmarkDetails({ route }: Props) {
 
       <Button
         title="Make Public Scan"
-        onPress={() =>
+        onPress={async () => {
+          if (selectedPreference !== "") {
+            await updateUserPreferences(characteristics, selectedPreference!);
+          }
           navigation.navigate("ScanRating", {
             scanData: {
               info,
@@ -202,10 +206,11 @@ export default function LandmarkDetails({ route }: Props) {
               locationGPS,
               timestamp,
               description,
+              tags: characteristics, // new: add tags field
             },
             isPublic: true,
-          })
-        }
+          });
+        }}
       />
       <View style={{ height: 10 }} />
       <Button title="Save as Private Scan" onPress={uploadPrivateScan} />

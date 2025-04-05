@@ -77,6 +77,13 @@ export default function App() {
         visionResponse.data.responses[0]?.landmarkAnnotations;
       if (landmarkAnnotations && landmarkAnnotations.length > 0) {
         const detectedLandmarkName = landmarkAnnotations[0].description;
+        // Extract geo coordinates from API response
+        const latLng =
+          landmarkAnnotations[0].locations &&
+          landmarkAnnotations[0].locations[0]?.latLng;
+        const locationGPS = latLng
+          ? `${latLng.latitude},${latLng.longitude}`
+          : "0,0";
         const chatGPTResponse = await axios.post(
           "https://api.openai.com/v1/chat/completions",
           {
@@ -90,92 +97,92 @@ export default function App() {
                 role: "user",
                 content: `Tell me about ${detectedLandmarkName}, fun facts and about stuff around it in 500 words. Only if no information is available, say: "Sorry, no information on this landmark. Add fun facts or history in bullet points in max 500 words. Provide JUST a JSON object with the text and another JSON with characteristics of each landmark.
                 The characteristics JSON should include: for each of the below categories, provide a list of items that belong to that category, you can assign multiple items to a category. Use JUST categories and items listed below. Thanks!:
-                Architecture:
-                - classical
-                - romanesque
-                - gothic
-                - baroque
-                - victorian
-                - neoclassical
-                - modernist
-                - brutalist
-                - postmodern
-                - futuristic
-                - vernacular
-                - traditional
-                - minimalist
-                - industrial
-                - islamic
-                - byzantine
-                - moorish
+                ARCHITECTURE:
+                - CLASSICAL
+                - ROMANESQUE
+                - GOTHIC
+                - BAROQUE
+                - VICTORIAN
+                - NEOCLASSICAL
+                - MODERNIST
+                - BRUTALIST
+                - POSTMODERN
+                - FUTURISTIC
+                - VERNACULAR
+                - TRADITIONAL
+                - MINIMALIST
+                - INDUSTRIAL
+                - ISLAMIC
+                - BYZANTINE
+                - MOORISH
 
-                Historical Era:
-                - ancient (before 500 ad)
-                - medieval (500–1500)
-                - renaissance (1500–1700)
-                - classical revival (1700–1850)
-                - industrial era (1850–1900)
-                - modern (1900–1970)
-                - contemporary (1970–present)
+                HISTORICAL_ERA:
+                - ANCIENT (BEFORE 500 AD)
+                - MEDIEVAL (500–1500)
+                - RENAISSANCE (1500–1700)
+                - CLASSICAL REVIVAL (1700–1850)
+                - INDUSTRIAL ERA (1850–1900)
+                - MODERN (1900–1970)
+                - CONTEMPORARY (1970–PRESENT)
 
-                Cultural:
-                - european
-                - eastern european
-                - middle eastern
-                - north african
-                - sub-saharan african
-                - east asian
-                - south asian
-                - southeast asian
-                - latin american
-                - indigenous
-                - nordic
-                - slavic
+                CULTURAL:
+                - EUROPEAN
+                - EASTERN EUROPEAN
+                - MIDDLE EASTERN
+                - NORTH AFRICAN
+                - SUB-SAHARAN AFRICAN
+                - EAST ASIAN
+                - SOUTH ASIAN
+                - SOUTHEAST ASIAN
+                - LATIN AMERICAN
+                - INDIGENOUS
+                - NORDIC
+                - SLAVIC
 
-                Landmark Type:
-                - religious (church, mosque, temple)
-                - military (fort, castle, bunker)
-                - governmental (palace, parliament)
-                - residential (historic houses, manors)
-                - commercial (old markets, shops)
-                - bridges
-                - towers
-                - obelisks
-                - ruins
-                - walls 
-                - gates
-                - sculptures
-                - monuments
-                - fountains
-                - museums
-                - plazas
-                - town squares
+                LANDMARK_TYPE:
+                - RELIGIOUS (CHURCH, MOSQUE, TEMPLE)
+                - MILITARY (FORT, CASTLE, BUNKER)
+                - GOVERNMENTAL (PALACE, PARLIAMENT)
+                - RESIDENTIAL (HISTORIC HOUSES, MANORS)
+                - COMMERCIAL (OLD MARKETS, SHOPS)
+                - BRIDGES
+                - TOWERS
+                - OBELISKS
+                - RUINS
+                - WALLS 
+                - GATES
+                - SCULPTURES
+                - MONUMENTS
+                - FOUNTAINS
+                - MUSEUMS
+                - PLAZAS
+                - TOWN SQUARES
 
-                Vibe:
-                - colorful
-                - symmetrical
-                - detailed
-                - ornate
-                - minimalist
-                - grand
-                - rustic
-                - sharp
-                - soft 
-                - overgrown 
-                - reflective (glass, water)
-                - night-lit
-                - street art
+                VIBE:
+                - COLORFUL
+                - SYMMETRICAL
+                - DETAILED
+                - ORNATE
+                - MINIMALIST
+                - GRAND
+                - RUSTIC
+                - SHARP
+                - SOFT 
+                - OVERGROWN 
+                - REFLECTIVE (GLASS, WATER)
+                - NIGHT-LIT
+                - STREET ART
 
-                Experience Style:
-                - photo spot
-                - panoramic view
-                - instagrammable
-                - peaceful
-                - crowd favorite
-                - hidden gem
-                - romantic
-                - family-friendly
-                - adventure involved`,
+                EXPERIENCE_STYLE:
+                - PHOTO SPOT
+                - PANORAMIC VIEW
+                - INSTAGRAMMABLE
+                - PEACEFUL
+                - CROWD FAVORITE
+                - HIDDEN GEM
+                - ROMANTIC
+                - FAMILY-FRIENDLY
+                - ADVENTURE INVOLVED`,
               },
             ],
           },
@@ -204,7 +211,7 @@ export default function App() {
           characteristics: parsedResponse.characteristics,
           landmarkName: detectedLandmarkName,
           base64: base64ImageData,
-          locationGPS: "0,0", // dummy value; replace with real GPS if available
+          locationGPS, // now using the extracted GPS coordinates
           timestamp: Date.now(),
           description: "",
         });
