@@ -14,6 +14,7 @@ import {
   Alert,
   TouchableOpacity,
   ActivityIndicator,
+  SafeAreaView,
 } from "react-native";
 import { Image } from "expo-image";
 import { AntDesign } from "@expo/vector-icons";
@@ -128,14 +129,16 @@ export default function App() {
           style={{ flex: 1, width: "100%", height: "100%" }}
         />
         <View style={styles.overlayContainer}>
-          <Pressable style={styles.retakeBtn} onPress={() => setUri(null)}>
-            <AntDesign name="arrowleft" size={16} color="white" />
-            <Text style={styles.retakeBtnText}>Retake Photo</Text>
-          </Pressable>
+          <SafeAreaView style={styles.safeAreaRetake}>
+            <Pressable style={styles.retakeBtn} onPress={() => setUri(null)}>
+              <AntDesign name="arrowleft" size={16} color="white" />
+              <Text style={styles.retakeBtnText}>Retake Photo</Text>
+            </Pressable>
+          </SafeAreaView>
           <TouchableOpacity
             style={styles.spotBtn}
             onPress={analyseImage}
-            disabled={loading} // disable the button while loading
+            disabled={loading}
           >
             {loading ? (
               <ActivityIndicator size="small" color="white" />
@@ -281,5 +284,9 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
     padding: 10,
     borderRadius: 20,
+  },
+  safeAreaRetake: {
+    flex: 1,
+    justifyContent: "flex-start",
   },
 });
