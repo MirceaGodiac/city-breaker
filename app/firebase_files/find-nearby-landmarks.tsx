@@ -2,6 +2,7 @@ import { Client } from "@googlemaps/google-maps-services-js";
 import axios from "axios";
 import { getDatabase, ref, get } from "firebase/database";
 import { auth } from "../../assets/firebase-config";
+import { Alert } from "react-native";
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyA9p8_jce6LBPwXB_BoHOMosBaLo85yeF8";
 const client = new Client({
@@ -47,12 +48,13 @@ function hasCommonTag(
   return false;
 }
 
-async function getUserPreferences(): Promise<string[]> {
+// Modified getUserPreferences to return a mapping of tag -> score.
+async function getUserPreferences(): Promise<{ [tag: string]: number }> {
   const uid = auth.currentUser?.uid;
   const db = getDatabase();
   const snapshot = await get(ref(db, `USERS/${uid}`));
   const userData = snapshot.val();
-  let prefs: string[] = [];
+  let prefs: { [tag: string]: number } = {};
   const categories = [
     "ARCHITECTURE",
     "HISTORICAL ERA",
@@ -64,88 +66,112 @@ async function getUserPreferences(): Promise<string[]> {
   categories.forEach((category) => {
     if (userData && userData[category]) {
       Object.entries(userData[category]).forEach(([key, value]) => {
-        if (Number(value) > 0) {
-          prefs.push(key);
+        let score = Number(value);
+        if (score > 0) {
+          prefs[key.toLowerCase()] = score; // Normalize keys to lowercase
         }
       });
     }
   });
+
+  // Log the extracted preferences
+  Alert.alert("User Preferences", JSON.stringify(prefs));
   return prefs;
 }
 
+// Modified findNearbyLandmarks to only return scanned landmarks sorted by matching score.
+// Modified findNearbyLandmarks to include photo, rating, and description
+// Modified findNearbyLandmarks to include base64 image, rating, and description
 export async function findNearbyLandmarks(
   locationName: string,
   latitude: number,
   longitude: number,
   inputType: string,
   radius: number
-): Promise<{ name: string }[]> {
-  let lat = latitude;
-  let lng = longitude;
-  let keywords: string[] = [];
-
+): Promise<
+  {
+    key: string;
+    name: string;
+    photo: string;
+    rating: number;
+    description: string;
+    time: string;
+  }[]
+> {
   try {
-    // First, geocode the location name to get coordinates if necessary
-    if (inputType !== "default") {
-      const geocodeResponse = await client.geocode({
-        params: {
-          address: locationName,
-          key: GOOGLE_MAPS_API_KEY,
-        },
-      });
-
-      if (!geocodeResponse.data.results[0]) {
-        throw new Error("Location not found");
-      }
-      const { lat: geocodeLat, lng: geocodeLng } =
-        geocodeResponse.data.results[0].geometry.location;
-      lat = geocodeLat;
-      lng = geocodeLng;
-    }
-
-    // Merge user preferences if uid is provided
+    // Extract user's tag preferences with scores
     const userPrefs = await getUserPreferences();
-    keywords = Array.from(new Set([...keywords, ...userPrefs]));
-    console.log("Merged keywords:", keywords.join(" ") + " landmarks");
+    const uid = auth.currentUser?.uid;
+    if (!uid) throw new Error("User not signed in.");
+
+    const db = getDatabase();
+
+    // Fetch user's PUBLIC_SCANS
+    const userScansSnapshot = await get(ref(db, `USERS/${uid}/PUBLIC_SCANS`));
+    const userScansData = userScansSnapshot.val();
+    const allowedScanIDs = userScansData ? Object.keys(userScansData) : [];
 
     // Query Firebase for scanned landmarks in the SCANS node
-    const db = getDatabase();
     const scansSnapshot = await get(ref(db, "SCANS"));
     const scansData = scansSnapshot.val();
-    let dbLandmarks: { name: string }[] = [];
+    // Include totalScore temporarily for sorting
+    const dbLandmarks: {
+      key: string;
+      name: string;
+      photo: string;
+      rating: number;
+      description: string;
+      totalScore: number;
+      time: string;
+    }[] = [];
+
     if (scansData) {
-      Object.values(scansData).forEach((scan: any) => {
-        // Assume 'locationGPS' is stored as "lat,lng" and 'tags' as object.
-        if (scan.locationGPS && scan.tags && scan.locationName) {
-          const [scanLatStr, scanLngStr] = scan.locationGPS.split(",");
-          const scanLat = parseFloat(scanLatStr);
-          const scanLng = parseFloat(scanLngStr);
-          const distance = getDistance(lat, lng, scanLat, scanLng);
-          if (distance <= radius && hasCommonTag(scan.tags, userPrefs)) {
-            dbLandmarks.push({ name: scan.locationName });
+      Object.entries(scansData).forEach(([scanID, scan]: [string, any]) => {
+        // Process only if the landmark has NOT been visited by the user
+        if (!allowedScanIDs.includes(scanID)) {
+          if (scan.locationName) {
+            let totalScore = 0;
+            // Traverse the nested tags structure (non-case-sensitive)
+            Object.entries(scan.tags).forEach(
+              ([group, tags]: [string, any]) => {
+                if (Array.isArray(tags)) {
+                  tags.forEach((tag: string) => {
+                    const normalizedTag = tag.toLowerCase();
+                    if (userPrefs[normalizedTag]) {
+                      totalScore += userPrefs[normalizedTag];
+                    }
+                  });
+                }
+              }
+            );
+            if (totalScore > 0) {
+              dbLandmarks.push({
+                key: scanID,
+                name: scan.locationName,
+                photo: scan.base64 || "",
+                rating: scan.Rating || 0,
+                description: scan.description || "",
+                totalScore,
+                time: scan.time || "",
+              });
+            }
           }
         }
       });
     }
 
-    // Call Google Places API as before.
-    const placesResponse = await client.placesNearby({
-      params: {
-        location: { lat, lng },
-        radius: radius,
-        keyword: keywords.join(" ") + " landmarks",
-        key: GOOGLE_MAPS_API_KEY,
-      },
-    });
-
-    const googleLandmarks = placesResponse.data.results.map((place) => ({
-      name: place.name || "Unknown",
+    // Sort landmarks by total matching score in descending order
+    dbLandmarks.sort((a, b) => b.totalScore - a.totalScore);
+    return dbLandmarks.map((item) => ({
+      key: item.key,
+      name: item.name,
+      photo: item.photo,
+      rating: item.rating,
+      description: item.description,
+      time: item.time, // include timestamp for display in recommendations
     }));
-
-    // Merge both arrays and return
-    return [...dbLandmarks, ...googleLandmarks];
   } catch (error) {
-    console.error("Error finding nearby places:", error);
+    console.error("Error finding scanned landmarks:", error);
     throw error;
   }
 }

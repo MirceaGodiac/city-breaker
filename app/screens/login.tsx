@@ -15,8 +15,8 @@ import { auth } from "../../assets/firebase-config";
 import { signInWithEmailAndPassword } from "firebase/auth";
 
 function Login() {
-  const [email, setEmail] = useState("mircea.godiac@gmail.com");
-  const [password, setPassword] = useState("Fastman123!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setIsLoading] = useState(false);
   const navigation = useNavigation();
 

@@ -19,7 +19,12 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.mariusdarius.citybreaker"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -31,6 +36,11 @@
           "photosPermission": "This app uses your camera to take photos of your city"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "caf6b016-0c88-4f7c-bc8c-87d5e67da250"
+      }
+    }
   }
 }

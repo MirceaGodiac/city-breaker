@@ -36,6 +36,8 @@ export default function App() {
   const ref = useRef<CameraView>(null);
   const [uri, setUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [scansLeft, setScansLeft] = useState(10); // new state for scans left
+  const [credits, setCredits] = useState(10); // new state for credits
 
   if (!permission) {
     return null;
@@ -99,8 +101,14 @@ export default function App() {
           : "0,0";
         console.log("Detected Landmark:", detectedLandmarkName);
 
-        const string_result = await analyzeLandmarkImage(detectedLandmarkName);
+        // Pass base64ImageData as the first argument to analyzeLandmarkImage
+        const string_result = await analyzeLandmarkImage(
+          base64ImageData,
+          detectedLandmarkName
+        );
         const result = JSON.parse(string_result);
+        // Decrement scans left after a successful scan
+        setCredits((prev) => prev - 1);
         navigation.navigate("LandmarkDetails", {
           info: result.text,
           characteristics: result.characteristics,
@@ -129,12 +137,6 @@ export default function App() {
           style={{ flex: 1, width: "100%", height: "100%" }}
         />
         <View style={styles.overlayContainer}>
-          <SafeAreaView style={styles.safeAreaRetake}>
-            <Pressable style={styles.retakeBtn} onPress={() => setUri(null)}>
-              <AntDesign name="arrowleft" size={16} color="white" />
-              <Text style={styles.retakeBtnText}>Retake Photo</Text>
-            </Pressable>
-          </SafeAreaView>
           <TouchableOpacity
             style={styles.spotBtn}
             onPress={analyseImage}
@@ -200,6 +202,39 @@ export default function App() {
 
   return (
     <View style={styles.container}>
+      {uri ? (
+        <View style={styles.topBar}>
+          <Pressable style={styles.retakeBtn} onPress={() => setUri(null)}>
+            <AntDesign name="arrowleft" size={16} color="white" />
+            <Text style={styles.retakeBtnText}>Retake Photo</Text>
+          </Pressable>
+          <TouchableOpacity onPress={() => navigation.navigate("BuyPackages")}>
+            <View style={styles.creditsCounter}>
+              <FontAwesome6
+                name="coins"
+                size={16}
+                color="#FFD700"
+                style={{ marginRight: 5 }}
+              />
+              <Text style={styles.scanCounterText}>Credits: {credits}</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.topRightContainer}>
+          <TouchableOpacity onPress={() => navigation.navigate("BuyPackages")}>
+            <View style={styles.creditsCounter}>
+              <FontAwesome6
+                name="coins"
+                size={16}
+                color="#FFD700"
+                style={{ marginRight: 5 }}
+              />
+              <Text style={styles.scanCounterText}>Credits: {credits}</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      )}
       {uri ? renderPicture() : renderCamera()}
     </View>
   );
@@ -241,12 +276,10 @@ const styles = StyleSheet.create({
   },
   overlayContainer: {
     position: "absolute",
-    top: 0,
     left: 0,
     right: 0,
-    bottom: 0,
-    justifyContent: "space-between",
-    padding: 20,
+    bottom: 20, // place at bottom
+    alignItems: "center", // center horizontally
   },
   retakeBtn: {
     flexDirection: "row",
@@ -254,7 +287,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.6)",
     padding: 10,
     borderRadius: 25,
-    alignSelf: "flex-start",
   },
   retakeBtnText: {
     color: "white",
@@ -285,8 +317,51 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 20,
   },
-  safeAreaRetake: {
-    flex: 1,
-    justifyContent: "flex-start",
+  scanCounter: {
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 25,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 5,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  topRightContainer: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    zIndex: 10,
+  },
+  creditsCounter: {
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 25,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 5,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  scanCounterText: {
+    color: "#FFD700",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  topBar: {
+    position: "absolute",
+    top: 40,
+    left: 20,
+    right: 20,
+    zIndex: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
 });

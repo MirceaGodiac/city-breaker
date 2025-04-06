@@ -23,7 +23,7 @@ function extractJsonFromResponse(text: string): any {
     }
   }
   
-  export async function analyzeLandmarkImage(
+  export async function analyzeLandmarkImage(base64Image: string,
     landmarkName: string
   ): Promise<string> {
     const response = await fetch(CLAUDE_API_URL, {
@@ -44,109 +44,117 @@ function extractJsonFromResponse(text: string): any {
               {
                 type: "text",
                 text: `You are an expert and passionate tour guide AI.
-  Tell me about ${landmarkName}, fun facts and historical details in 500 words.
-  If no information is available, respond with "Sorry, no information on this landmark" and then provide fun facts or history in bullet points.
-  Provide JUST a JSON object like this: 
-  The structure must be:
-  {
-    "text": string,
-    "characteristics": {
-      "ARCHITECTURE": ["CLASSICAL", "ROMANESQUE"],
-      "HISTORICAL_ERA": ["ANCIENT"],
-      "CULTURAL": ["EUROPEAN", "INDIGENOUS"],
-      "LANDMARK_TYPE": ["RELIGIOUS", "MILITARY"],
-      "VIBE": ["COLORFUL", "SYMMETRICAL"],
-      "EXPERIENCE_STYLE": ["PHOTO SPOT", "PANORAMIC VIEW"]
-    }
-  }
-    Use ONLY the keywords from the list below to fill in the characteristics:
-    ARCHITECTURE:
-          - CLASSICAL
-          - ROMANESQUE
-          - GOTHIC
-          - BAROQUE
-          - VICTORIAN
-          - NEOCLASSICAL
-          - MODERNIST
-          - BRUTALIST
-          - POSTMODERN
-          - FUTURISTIC
-          - VERNACULAR
-          - TRADITIONAL
-          - MINIMALIST
-          - INDUSTRIAL
-          - ISLAMIC
-          - BYZANTINE
-          - MOORISH
-  
-          HISTORICAL_ERA:
-          - ANCIENT (BEFORE 500 AD)
-          - MEDIEVAL (500–1500)
-          - RENAISSANCE (1500–1700)
-          - CLASSICAL REVIVAL (1700–1850)
-          - INDUSTRIAL ERA (1850–1900)
-          - MODERN (1900–1970)
-          - CONTEMPORARY (1970–PRESENT)
-  
-          CULTURAL:
-          - EUROPEAN
-          - EASTERN EUROPEAN
-          - MIDDLE EASTERN
-          - NORTH AFRICAN
-          - SUB-SAHARAN AFRICAN
-          - EAST ASIAN
-          - SOUTH ASIAN
-          - SOUTHEAST ASIAN
-          - LATIN AMERICAN
-          - INDIGENOUS
-          - NORDIC
-          - SLAVIC
-  
-          LANDMARK_TYPE:
-          - RELIGIOUS (CHURCH, MOSQUE, TEMPLE)
-          - MILITARY (FORT, CASTLE, BUNKER)
-          - GOVERNMENTAL (PALACE, PARLIAMENT)
-          - RESIDENTIAL (HISTORIC HOUSES, MANORS)
-          - COMMERCIAL (OLD MARKETS, SHOPS)
-          - BRIDGES
-          - TOWERS
-          - OBELISKS
-          - RUINS
-          - WALLS 
-          - GATES
-          - SCULPTURES
-          - MONUMENTS
-          - FOUNTAINS
-          - MUSEUMS
-          - PLAZAS
-          - TOWN SQUARES
-  
-          VIBE:
-          - COLORFUL
-          - SYMMETRICAL
-          - DETAILED
-          - ORNATE
-          - MINIMALIST
-          - GRAND
-          - RUSTIC
-          - SHARP
-          - SOFT 
-          - OVERGROWN 
-          - REFLECTIVE (GLASS, WATER)
-          - NIGHT-LIT
-          - STREET ART
-  
-          EXPERIENCE_STYLE:
-          - PHOTO SPOT
-          - PANORAMIC VIEW
-          - INSTAGRAMMABLE
-          - PEACEFUL
-          - CROWD FAVORITE
-          - HIDDEN GEM
-          - ROMANTIC
-          - FAMILY-FRIENDLY
-          - ADVENTURE INVOLVED
-  `,
+                Tell me about ${landmarkName}, fun facts and historical details in 500 words.
+                If no information is available, respond with "Sorry, no information on this landmark" and then provide fun facts or history in bullet points.
+                Provide JUST a JSON object like this: 
+                The structure must be:
+                {
+                  "text": string,
+                  "characteristics": {
+                    "ARCHITECTURE": ["CLASSICAL", "ROMANESQUE"],
+                    "HISTORICAL_ERA": ["ANCIENT"],
+                    "CULTURAL": ["EUROPEAN", "INDIGENOUS"],
+                    "LANDMARK_TYPE": ["RELIGIOUS", "MILITARY"],
+                    "VIBE": ["COLORFUL", "SYMMETRICAL"],
+                    "EXPERIENCE_STYLE": ["PHOTO SPOT", "PANORAMIC VIEW"]
+                  }
+                }
+                  Use ONLY the keywords from the list below to fill in the characteristics:
+                  ARCHITECTURE:
+                        - CLASSICAL
+                        - ROMANESQUE
+                        - GOTHIC
+                        - BAROQUE
+                        - VICTORIAN
+                        - NEOCLASSICAL
+                        - MODERNIST
+                        - BRUTALIST
+                        - POSTMODERN
+                        - FUTURISTIC
+                        - VERNACULAR
+                        - TRADITIONAL
+                        - MINIMALIST
+                        - INDUSTRIAL
+                        - ISLAMIC
+                        - BYZANTINE
+                        - MOORISH
+                
+                        HISTORICAL_ERA:
+                        - ANCIENT (BEFORE 500 AD)
+                        - MEDIEVAL (500–1500)
+                        - RENAISSANCE (1500–1700)
+                        - CLASSICAL REVIVAL (1700–1850)
+                        - INDUSTRIAL ERA (1850–1900)
+                        - MODERN (1900–1970)
+                        - CONTEMPORARY (1970–PRESENT)
+                
+                        CULTURAL:
+                        - EUROPEAN
+                        - EASTERN EUROPEAN
+                        - MIDDLE EASTERN
+                        - NORTH AFRICAN
+                        - SUB-SAHARAN AFRICAN
+                        - EAST ASIAN
+                        - SOUTH ASIAN
+                        - SOUTHEAST ASIAN
+                        - LATIN AMERICAN
+                        - INDIGENOUS
+                        - NORDIC
+                        - SLAVIC
+                
+                        LANDMARK_TYPE:
+                        - RELIGIOUS (CHURCH, MOSQUE, TEMPLE)
+                        - MILITARY (FORT, CASTLE, BUNKER)
+                        - GOVERNMENTAL (PALACE, PARLIAMENT)
+                        - RESIDENTIAL (HISTORIC HOUSES, MANORS)
+                        - COMMERCIAL (OLD MARKETS, SHOPS)
+                        - BRIDGES
+                        - TOWERS
+                        - OBELISKS
+                        - RUINS
+                        - WALLS 
+                        - GATES
+                        - SCULPTURES
+                        - MONUMENTS
+                        - FOUNTAINS
+                        - MUSEUMS
+                        - PLAZAS
+                        - TOWN SQUARES
+                
+                        VIBE:
+                        - COLORFUL
+                        - SYMMETRICAL
+                        - DETAILED
+                        - ORNATE
+                        - MINIMALIST
+                        - GRAND
+                        - RUSTIC
+                        - SHARP
+                        - SOFT 
+                        - OVERGROWN 
+                        - REFLECTIVE (GLASS, WATER)
+                        - NIGHT-LIT
+                        - STREET ART
+                
+                        EXPERIENCE_STYLE:
+                        - PHOTO SPOT
+                        - PANORAMIC VIEW
+                        - INSTAGRAMMABLE
+                        - PEACEFUL
+                        - CROWD FAVORITE
+                        - HIDDEN GEM
+                        - ROMANTIC
+                        - FAMILY-FRIENDLY
+                        - ADVENTURE INVOLVED
+                `,
+              },
+              {
+                type: "image",
+                source: {
+                  type: "base64",
+                  media_type: "image/jpeg",
+                  data: base64Image,
+                },
               },
             ],
           },
