@@ -105,7 +105,9 @@ export default function LandmarkDetails({ route }: Props) {
           encoding: FileSystem.EncodingType.Base64,
         });
 
-        const { sound: newSound } = await Audio.Sound.createAsync({ uri: fileUri });
+        const { sound: newSound } = await Audio.Sound.createAsync({
+          uri: fileUri,
+        });
         // Remove logging from playback status update:
         newSound.setOnPlaybackStatusUpdate(() => {});
         setSound(newSound);
@@ -196,6 +198,16 @@ export default function LandmarkDetails({ route }: Props) {
     }
   };
 
+  // Add helper function to format text for tags and categories
+  function formatText(text: string): string {
+    return text
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  }
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.card}>
@@ -208,7 +220,10 @@ export default function LandmarkDetails({ route }: Props) {
           <ScrollView style={styles.infoContainer}>
             <Text style={styles.info}>{info}</Text>
           </ScrollView>
-          <TouchableOpacity style={styles.audioButtonCircle} onPress={handleAudioPress}>
+          <TouchableOpacity
+            style={styles.audioButtonCircle}
+            onPress={handleAudioPress}
+          >
             {audioLoading ? (
               <ActivityIndicator size="small" color="#007AFF" />
             ) : !sound ? (
@@ -272,8 +287,10 @@ export default function LandmarkDetails({ route }: Props) {
             {Object.entries(characteristics as { [key: string]: string[] }).map(
               ([category, items]) => (
                 <View key={category} style={styles.tag}>
-                  <Text style={styles.tagTitle}>{category}</Text>
-                  <Text style={styles.tagItems}>{items.join(", ")}</Text>
+                  <Text style={styles.tagTitle}>{formatText(category)}</Text>
+                  <Text style={styles.tagItems}>
+                    {items.map((item) => formatText(item)).join(", ")}
+                  </Text>
                 </View>
               )
             )}
@@ -283,30 +300,43 @@ export default function LandmarkDetails({ route }: Props) {
         )}
       </View>
 
-      <Button
-        title="Make Public Scan"
-        onPress={async () => {
-          if (selectedPreference !== "") {
-            await updateUserPreferences(characteristics, selectedPreference);
-          }
-          navigation.navigate("ScanRating", {
-            scanData: {
-              info,
-              landmarkName,
-              base64,
-              locationGPS,
-              timestamp,
-              description,
-              tags: characteristics,
-            },
-            isPublic: true,
-          });
-        }}
-      />
-      <View style={{ height: 10 }} />
-      <Button title="Save as Private Scan" onPress={uploadPrivateScan} />
-      <View style={{ height: 10 }} />
-      <Button title="Go Back" onPress={() => navigation.goBack()} />
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={[styles.coolButton, { backgroundColor: "#007AFF" }]}
+          onPress={async () => {
+            if (selectedPreference !== "") {
+              await updateUserPreferences(characteristics, selectedPreference);
+            }
+            navigation.navigate("ScanRating", {
+              scanData: {
+                info,
+                landmarkName,
+                base64,
+                locationGPS,
+                timestamp,
+                description,
+                tags: characteristics,
+              },
+              isPublic: true,
+            });
+          }}
+        >
+          <Text style={styles.coolButtonText}>Make Public Scan</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.coolButton, { backgroundColor: "#007AFF" }]}
+          onPress={uploadPrivateScan}
+        >
+          <Text style={styles.coolButtonText}>Save as Private Scan</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.coolButton, { backgroundColor: "#FF3B30" }]}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.coolButtonText}>Go Back</Text>
+        </TouchableOpacity>
+        <View style={{ height: 50 }} /> {/* Spacer for better layout */}
+      </View>
     </ScrollView>
   );
 }
@@ -428,5 +458,26 @@ const styles = StyleSheet.create({
   tagItems: {
     fontSize: 12,
     color: "#555",
+  },
+  buttonContainer: {
+    marginVertical: 15,
+    paddingHorizontal: 10,
+  },
+  coolButton: {
+    borderRadius: 10,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    marginVertical: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  coolButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
