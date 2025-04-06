@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,12 +7,12 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   SafeAreaView,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import axios from 'axios';
-import { useNavigation } from '@react-navigation/native';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import axios from "axios";
+import { useNavigation } from "@react-navigation/native";
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyA9p8_jce6LBPwXB_BoHOMosBaLo85yeF8';
+const GOOGLE_MAPS_API_KEY = "";
 
 interface ReviewsScreenProps {
   route: {
@@ -52,7 +52,7 @@ const ReviewsScreen: React.FC<ReviewsScreenProps> = ({ route }) => {
         setReviews(response.data.result.reviews.slice(0, 5));
       }
     } catch (err) {
-      setError('Failed to fetch reviews');
+      setError("Failed to fetch reviews");
       console.error(err);
     } finally {
       setLoading(false);
@@ -63,7 +63,7 @@ const ReviewsScreen: React.FC<ReviewsScreenProps> = ({ route }) => {
     return [...Array(5)].map((_, index) => (
       <Ionicons
         key={index}
-        name={index < rating ? 'star' : 'star-outline'}
+        name={index < rating ? "star" : "star-outline"}
         size={16}
         color="#FFD700"
       />
@@ -103,8 +103,16 @@ const ReviewsScreen: React.FC<ReviewsScreenProps> = ({ route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={20} color="#007AFF" style={styles.backArrow} />
+      <TouchableOpacity
+        onPress={() => navigation.goBack()}
+        style={styles.backButton}
+      >
+        <Ionicons
+          name="arrow-back"
+          size={20}
+          color="#007AFF"
+          style={styles.backArrow}
+        />
         <Text style={styles.backButtonText}>Back</Text>
       </TouchableOpacity>
       <FlatList
@@ -112,7 +120,9 @@ const ReviewsScreen: React.FC<ReviewsScreenProps> = ({ route }) => {
         renderItem={renderReview}
         keyExtractor={(item) => item.time.toString()}
         contentContainerStyle={styles.listContainer}
-        ListEmptyComponent={<Text style={styles.emptyText}>No reviews available.</Text>}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>No reviews available.</Text>
+        }
       />
     </SafeAreaView>
   );
@@ -121,64 +131,64 @@ const ReviewsScreen: React.FC<ReviewsScreenProps> = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   centered: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   listContainer: {
     padding: 16,
   },
   reviewCard: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   reviewHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   authorName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   timeAgo: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
   },
   ratingContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 8,
   },
   reviewText: {
     fontSize: 14,
     lineHeight: 20,
-    color: '#333',
+    color: "#333",
   },
   errorText: {
-    color: '#F44336',
+    color: "#F44336",
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
   emptyText: {
-    textAlign: 'center',
-    color: '#666',
+    textAlign: "center",
+    color: "#666",
     fontSize: 16,
     marginTop: 32,
   },
   backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     margin: 16,
   },
   backArrow: {
@@ -186,7 +196,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    color: '#007AFF',
+    color: "#007AFF",
   },
 });
 

@@ -1,7 +1,7 @@
 import { Client } from "@googlemaps/google-maps-services-js";
 import axios from "axios";
 
-const GOOGLE_MAPS_API_KEY = "AIzaSyA9p8_jce6LBPwXB_BoHOMosBaLo85yeF8";
+const GOOGLE_MAPS_API_KEY = "";
 const client = new Client({
   // Add axios as the HTTP adapter
   config: {

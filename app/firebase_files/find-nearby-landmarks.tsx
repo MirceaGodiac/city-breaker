@@ -4,7 +4,7 @@ import { getDatabase, ref, get } from "firebase/database";
 import { auth } from "../../assets/firebase-config";
 import { Alert } from "react-native";
 
-const GOOGLE_MAPS_API_KEY = "AIzaSyA9p8_jce6LBPwXB_BoHOMosBaLo85yeF8";
+const GOOGLE_MAPS_API_KEY = "";
 const client = new Client({
   config: {
     adapter: axios.create().defaults.adapter,

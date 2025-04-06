@@ -1,4 +1,4 @@
-const CLAUDE_API_KEY = "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";
+const CLAUDE_API_KEY = "";
 const CLAUDE_API_URL = "https://api.anthropic.com/v1/messages";
 
 function extractJsonFromResponse(text: string): any {

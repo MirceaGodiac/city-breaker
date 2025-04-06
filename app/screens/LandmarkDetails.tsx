@@ -81,7 +81,7 @@ export default function LandmarkDetails({ route }: Props) {
       setAudioLoading(true);
       try {
         await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
-        const apiKey = "AIzaSyA9p8_jce6LBPwXB_BoHOMosBaLo85yeF8";
+        const apiKey = "";
         const ttsUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
         const requestBody = {
           input: { text: info },

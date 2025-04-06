@@ -26,9 +26,8 @@ import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
 import { analyzeLandmarkImage } from "../claude";
 
-const VISION_API_KEY = "AIzaSyAnHyrHJLYMvcRD38LwYsHCIc9WqWS34vg";
-const CLAUDE_API_KEY =
-  "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";
+const VISION_API_KEY = "";
+const CLAUDE_API_KEY = "";
 
 export default function App() {
   const navigation = useNavigation();

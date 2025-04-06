@@ -8,14 +8,14 @@ import {getDatabase} from "firebase/database"
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyB2npifTsS7yEihYkpcThHg6Il0wq393lg",
-  authDomain: "city-breaker.firebaseapp.com",
-  databaseURL: "https://city-breaker-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "city-breaker",
-  storageBucket: "city-breaker.firebasestorage.app",
-  messagingSenderId: "181212596638",
-  appId: "1:181212596638:web:188f0c9a0625c65cfaae8f",
-  measurementId: "G-0482V76Z3M"
+  apiKey: "",
+  authDomain: "",
+  databaseURL: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: "",
+  measurementId: ""
 };
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
